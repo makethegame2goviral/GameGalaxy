@@ -2,909 +2,535 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>GameGalaxy</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070a14">
+<title>GameGalaxy • Yusuf 7D</title>
 <style>
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
+:root{
+  --bg:#070a14;--panel:#0f1424;--panel2:#151c31;--line:#28324e;--text:#f6f7fb;--muted:#9fa9c7;
+  --accent:#7c5cff;--accent2:#00d8ff;--danger:#ff5577;--ok:#49e68d;--gold:#ffd75e;
+  --shadow:0 18px 50px rgba(0,0,0,.35);--radius:24px;
 }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 20% 0%,#17204a 0,#070a14 38%),#070a14;color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{overflow-x:hidden}
+button,input{font:inherit}
+button{border:0;color:var(--text);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid rgba(0,216,255,.55);outline-offset:2px}
+::selection{background:rgba(124,92,255,.35)}
+.noSelect{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #080b16;
-    color: white;
-}
+/* ---------- LANDING ---------- */
+#landing{min-height:100svh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(1px);pointer-events:none;opacity:.45}
+.orb.a{width:260px;height:260px;left:-80px;top:50px;background:#5a3cff55}
+.orb.b{width:320px;height:320px;right:-110px;bottom:-70px;background:#00d8ff33}
+.hero{position:relative;z-index:1;width:min(1100px,100%);padding:36px;border:1px solid #2a3552;background:linear-gradient(180deg,#10172aee,#0b1020ee);border-radius:32px;box-shadow:var(--shadow)}
+.badge{display:inline-flex;gap:8px;align-items:center;padding:9px 13px;border-radius:999px;background:#121b34;border:1px solid #2b3b64;color:#dce4ff;font-weight:700;font-size:13px}
+.hero h1{font-size:clamp(46px,9vw,84px);line-height:.95;margin:22px 0 12px;letter-spacing:-3px}
+.hero h1 span{background:linear-gradient(90deg,#fff,#b8c2ff,#55e7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:clamp(16px,2.4vw,22px);color:var(--muted);max-width:720px;line-height:1.5;margin:0 0 26px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px}
+.primary,.secondary,.ghost{padding:15px 20px;border-radius:16px;font-weight:800;transition:transform .15s,filter .15s}
+.primary{background:linear-gradient(135deg,var(--accent),#5943ff);box-shadow:0 10px 26px rgba(124,92,255,.25)}
+.secondary{background:#18213a;border:1px solid #34405e}
+.ghost{background:transparent;border:1px solid #33415f;color:#cbd4f5}
+.primary:active,.secondary:active,.ghost:active,.gameCard:active{transform:scale(.98)}
 
-header {
-    padding: 28px 20px;
-    text-align: center;
-    background: linear-gradient(135deg, #111936, #24104a);
-    border-bottom: 2px solid #30365c;
-}
+/* ---------- ARCADE ---------- */
+#arcade{display:none;min-height:100svh;padding:18px 18px 50px}
+.shell{width:min(1280px,100%);margin:0 auto}
+.topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brandIcon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#6f57ff,#00d8ff);font-size:24px}
+.brandText strong{display:block;font-size:18px}.brandText small{color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.searchWrap{position:relative;flex:1 1 320px;min-width:260px}
+#search{width:100%;padding:15px 18px 15px 46px;border-radius:16px;border:1px solid #2c3857;background:#0d1425;color:#fff}
+.searchIcon{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.65}
+#searchHistory{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 18px;min-height:28px}
+.historyChip{padding:8px 12px;border-radius:999px;background:#10192e;border:1px solid #293658;color:#cad2ee;font-size:12px}
+.filters{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}
+.filter{white-space:nowrap;padding:10px 14px;border-radius:999px;border:1px solid #2a3552;background:#0f1629;color:#adb7d4}.filter.active{background:#1a2750;border-color:#4e67aa;color:#fff}
+.hero2{display:grid;grid-template-columns:1.35fr .65fr;gap:16px;margin-bottom:18px}
+.infoPanel{padding:22px;border:1px solid #293654;border-radius:22px;background:linear-gradient(135deg,#11182b,#0d1322)}
+.infoPanel h2{margin:0 0 6px}.infoPanel p{color:var(--muted);margin:0;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:16px;border:1px solid #293654;border-radius:18px;background:#0e1526}.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:12px}
+.games{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.gameCard{background:linear-gradient(180deg,#121a2d,#0e1424);border:1px solid #2a3552;border-radius:22px;padding:14px;min-height:235px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 12px 30px rgba(0,0,0,.18);transition:transform .15s, border-color .15s}
+.gameCard:hover{border-color:#4b5e8d}
+.thumb{height:108px;border-radius:16px;display:grid;place-items:center;font-size:56px;background:radial-gradient(circle at 50% 20%,#263a75,#12182a 70%);border:1px solid #293657}
+.cardTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 5px}.cardTitle{font-size:18px;font-weight:850}.tag{font-size:10px;padding:6px 8px;border-radius:999px;background:#17213b;color:#bfc9eb;border:1px solid #2f3d63}
+.gameCard p{color:var(--muted);font-size:13px;line-height:1.4;margin:0 0 12px}.cardButton{width:100%;padding:12px 14px;border-radius:14px;background:#1a2650;border:1px solid #344e8d;font-weight:800}.cardButton:hover{filter:brightness(1.08)}
+.empty{display:none;padding:28px;border:1px dashed #34415f;border-radius:20px;color:var(--muted);text-align:center}
 
-header h1 {
-    margin: 0;
-    font-size: 42px;
-}
+/* ---------- GAME MODAL ---------- */
+#gameModal{display:none;position:fixed;inset:0;z-index:50;background:rgba(3,5,11,.84);backdrop-filter:blur(10px);padding:12px}
+.gameWindow{width:min(1050px,100%);height:min(92svh,820px);margin:auto;background:#080d19;border:1px solid #2b3857;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.gameHeader{height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#0e1423;border-bottom:1px solid #273351}.gameHeader h2{margin:0;font-size:18px}.gameHeadBtns{display:flex;gap:8px}.miniBtn{padding:10px 12px;border-radius:12px;background:#16213a;border:1px solid #30405f}.miniBtn.danger{background:#2c1722;border-color:#5b293b}
+.gameBody{flex:1;min-height:0;display:grid;place-items:center;position:relative;padding:12px}
+#gameCanvas{width:min(100%,900px);height:auto;aspect-ratio:16/10;background:#02040a;border:1px solid #232e4a;border-radius:18px;touch-action:none;image-rendering:auto}
+.gameFooter{padding:10px 12px;background:#0c1220;border-top:1px solid #24304a;color:var(--muted);font-size:12px;text-align:center}
+.touchZone{position:absolute;top:0;bottom:0;width:50%;z-index:3;display:none}.touchZone.left{left:0}.touchZone.right{right:0}.touchZone.active{background:rgba(124,92,255,.06)}
+#touchOverlay{position:absolute;inset:0;pointer-events:none;display:none}.hint{padding:10px 14px;border-radius:999px;background:#0e1730dd;border:1px solid #2d3d65;color:#d5ddf5;font-size:12px}
 
-header p {
-    color: #b8bee0;
-    margin: 10px 0 0;
-}
+/* ---------- TIME GAME ---------- */
+.timePanel{width:min(760px,96%);padding:28px;border-radius:28px;border:1px solid #2d3a5b;background:linear-gradient(180deg,#111a31,#0a1020);text-align:center;box-shadow:var(--shadow)}
+.timeLabel{color:#a6b0cc;font-size:14px}.targetTime{font-size:clamp(48px,12vw,92px);font-weight:900;letter-spacing:-2px;margin:8px 0 4px}.bigBuzzer{width:min(340px,80%);aspect-ratio:1;max-width:340px;border-radius:50%;margin:18px auto;background:radial-gradient(circle at 42% 34%,#ff8ba3,#ff355e 55%,#a71031);box-shadow:inset 0 -18px 0 #8c1730,0 22px 48px rgba(255,53,94,.24);border:8px solid #511123;font-size:clamp(28px,7vw,52px);font-weight:950}.bigBuzzer:active{transform:translateY(6px);box-shadow:inset 0 -7px 0 #8c1730,0 10px 20px rgba(255,53,94,.2)}.timeResult{min-height:68px;font-size:16px;color:#dbe1f5}.scoreLine{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;color:#b6c0dc}.scorePill{padding:8px 11px;border-radius:999px;background:#131d34;border:1px solid #2a3858}
 
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 25px;
-}
+/* ---------- MINI GAME UI ---------- */
+#gameExtra{position:absolute;inset:0;display:none;place-items:center;z-index:4;pointer-events:auto;padding:14px}
+.extraPanel{width:min(760px,96%);max-height:100%;overflow:auto;padding:20px;border-radius:22px;background:#0f1628f4;border:1px solid #2d3a5b;box-shadow:var(--shadow)}
+.choiceGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.choice{padding:14px;border-radius:14px;background:#16203a;border:1px solid #334364}.choice.active{border-color:#7c5cff;background:#211a4d}
+.ticGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:360px;margin:18px auto}.ticCell{aspect-ratio:1;border-radius:16px;background:#16203a;border:1px solid #324364;font-size:46px;font-weight:900}.statBig{font-size:32px;font-weight:900}.center{text-align:center}
 
-.games {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-}
+/* ---------- EASTER EGGS ---------- */
+#fxLayer{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;overflow:hidden}.shake{animation:shake .58s ease-in-out}.scan{position:absolute;bottom:-22%;left:50%;transform:translateX(-50%);font-size:clamp(120px,28vw,280px);animation:razor 1.35s ease-in-out forwards}.tnt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:clamp(100px,22vw,230px);animation:tnt .9s ease-in-out forwards}.boom{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:clamp(120px,25vw,300px);animation:boom .65s ease-out forwards}.codeInfo{position:fixed;inset:0;z-index:95;background:rgba(4,7,15,.86);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}.codeBox{width:min(760px,100%);max-height:88svh;overflow:auto;border:1px solid #30405f;background:#0e1526;border-radius:24px;padding:20px;box-shadow:var(--shadow)}.codeRow{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #24304a}.codeRow:last-child{border-bottom:0}.codeKey{font-weight:850;color:#dfe6ff}.codeDesc{color:#9fabca;text-align:right}
+@keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-18px)}30%{transform:translateX(18px)}45%{transform:translateX(-13px)}60%{transform:translateX(13px)}75%{transform:translateX(-7px)}90%{transform:translateX(7px)}}
+@keyframes razor{0%{bottom:-30%;opacity:0;transform:translateX(-50%) scale(.8)}20%{opacity:1}75%{opacity:1}100%{bottom:110%;opacity:0;transform:translateX(-50%) scale(1.05)}}
+@keyframes tnt{0%{transform:translate(-50%,-50%) scale(.25);opacity:0}25%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{transform:translate(-50%,-50%) scale(1.05);opacity:1}100%{transform:translate(-50%,-50%) scale(1.15);opacity:0}}
+@keyframes boom{0%{transform:translate(-50%,-50%) scale(.1);opacity:0}45%{opacity:1}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
 
-.card {
-    background: #14192b;
-    border: 1px solid #303752;
-    border-radius: 18px;
-    padding: 18px;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 10px 30px rgba(0,0,0,.25);
-}
+/* ---------- END BOSS ---------- */
+.bossHud{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:min(70%,620px);z-index:5;display:none}.bossName{text-align:center;font-weight:900;margin-bottom:6px}.bossHp{height:16px;border-radius:999px;background:#241224;border:1px solid #67304f;overflow:hidden}.bossHp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5577,#ff9d61)}
 
-.card .icon {
-    font-size: 55px;
-}
-
-.card h2 {
-    margin: 8px 0;
-}
-
-.card p {
-    color: #aeb5d3;
-    font-size: 14px;
-}
-
-button {
-    border: 0;
-    border-radius: 12px;
-    padding: 13px 18px;
-    background: #6c5ce7;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-button:active {
-    transform: scale(.97);
-}
-
-.gameScreen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: #050711;
-    z-index: 100;
-    overflow: auto;
-}
-
-.gameTop {
-    height: 58px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 14px;
-    background: #11162a;
-}
-
-.gameTop h2 {
-    margin: 0;
-    font-size: 20px;
-}
-
-canvas {
-    display: block;
-    margin: auto;
-    background: #02040b;
-    max-width: 100%;
-    touch-action: none;
-}
-
-.close {
-    background: #32384e;
-}
-
-.touchLeft,
-.touchRight {
-    position: fixed;
-    bottom: 0;
-    width: 50%;
-    height: 35%;
-    opacity: .04;
-    z-index: 110;
-}
-
-.touchLeft {
-    left: 0;
-}
-
-.touchRight {
-    right: 0;
-}
-
-.touchLeft:active,
-.touchRight:active {
-    opacity: .12;
-}
-
-.message {
-    text-align: center;
-    padding: 12px;
-}
-
-@media (max-width: 900px) {
-    .games {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 550px) {
-    .games {
-        grid-template-columns: 1fr;
-    }
-
-    header h1 {
-        font-size: 34px;
-    }
-}
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:1000px){.games{grid-template-columns:repeat(3,minmax(0,1fr))}.hero2{grid-template-columns:1fr}}
+@media (max-width:760px){#arcade{padding:12px 10px 35px}.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.gameCard{min-height:220px;border-radius:19px;padding:11px}.thumb{height:92px;font-size:44px}.hero{padding:26px;border-radius:26px}.gameWindow{height:96svh;border-radius:18px}.gameBody{padding:8px}.touchZone{display:block}.timePanel{padding:18px}.choiceGrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.games{grid-template-columns:1fr 1fr}.gameCard{min-height:210px}.cardTitle{font-size:16px}.gameCard p{font-size:12px}.topbar{align-items:stretch}.toolbar{width:100%}.searchWrap{min-width:0}.stats{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
 </head>
+<body class="noSelect">
 
-<body>
-
-<header>
-    <h1>🎮 GameGalaxy</h1>
-    <p>Yusuf 7D · Deine Browser-Spielesammlung</p>
-</header>
-
-<div class="container">
-
-    <h2>🔥 Spiele</h2>
-
-    <div class="games">
-
-        <div class="card">
-            <div>
-                <div class="icon">🚀</div>
-                <h2>Galaxy Blaster</h2>
-                <p>Steuere dein Raumschiff und zerstöre die Bomben.</p>
-            </div>
-            <button onclick="openGame('space')">Spielen</button>
-        </div>
-
-        <div class="card">
-            <div>
-                <div class="icon">🐍</div>
-                <h2>Snake</h2>
-                <p>Das klassische Schlangen-Spiel.</p>
-            </div>
-            <button onclick="openGame('snake')">Spielen</button>
-        </div>
-
-        <div class="card">
-            <div>
-                <div class="icon">🏃</div>
-                <h2>Jump Run</h2>
-                <p>Springe über Hindernisse und sammle Punkte.</p>
-            </div>
-            <button onclick="openGame('jump')">Spielen</button>
-        </div>
-
-        <div class="card">
-            <div>
-                <div class="icon">⚡</div>
-                <h2>Neon Runner</h2>
-                <p>Automatisches Laufen, springen und Hindernissen ausweichen.</p>
-            </div>
-            <button onclick="openGame('dash')">Spielen</button>
-        </div>
-
-        <div class="card">
-            <div>
-                <div class="icon">⏱️</div>
-                <h2>Perfect Time</h2>
-                <p>Stoppe exakt nach der vorgegebenen Zeit.</p>
-            </div>
-            <button onclick="openGame('time')">Spielen</button>
-        </div>
-
+<section id="landing">
+  <div class="orb a"></div><div class="orb b"></div>
+  <div class="hero">
+    <div class="badge">🎮 GAMEGALAXY · YUSUF 7D</div>
+    <h1>Deine kleine <span>Arcade-Welt.</span></h1>
+    <p>Viele eigene Browser-Spiele, direkt auf iPad, Handy und Computer. Tippen, wischen, spielen – und ein paar geheime Überraschungen warten auch noch.</p>
+    <div class="hero-actions">
+      <button class="primary" id="startArcade">▶ Spiele starten</button>
+      <button class="secondary" id="showCodesFromLanding">✨ Geheimcodes</button>
     </div>
-</div>
+  </div>
+</section>
 
-
-<div id="gameScreen" class="gameScreen">
-
-    <div class="gameTop">
-        <h2 id="gameTitle">Game</h2>
-
-        <div>
-            <button onclick="fullscreenGame()">⛶</button>
-            <button class="close" onclick="closeGame()">✕</button>
-        </div>
+<section id="arcade">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brandIcon">🎮</div>
+        <div class="brandText"><strong>GameGalaxy</strong><small>Yusuf 7D · deine Spielesammlung</small></div>
+      </div>
+      <div class="toolbar">
+        <button class="ghost" id="backHome">⌂ Start</button>
+        <button class="ghost" id="showCodes">✨ Geheimcodes</button>
+      </div>
     </div>
 
-    <div id="gameMessage" class="message"></div>
+    <div class="searchWrap">
+      <span class="searchIcon">🔎</span>
+      <input id="search" autocomplete="off" spellcheck="false" placeholder="Spiel oder Geheimcode suchen …">
+    </div>
+    <div id="searchHistory"></div>
 
-    <canvas id="canvas" width="900" height="550"></canvas>
+    <div class="filters">
+      <button class="filter active" data-filter="all">Alle</button>
+      <button class="filter" data-filter="action">Action</button>
+      <button class="filter" data-filter="arcade">Arcade</button>
+      <button class="filter" data-filter="puzzle">Puzzle</button>
+      <button class="filter" data-filter="time">Zeitspiele</button>
+      <button class="filter" data-filter="classic">Klassiker</button>
+    </div>
 
-    <div class="touchLeft"></div>
-    <div class="touchRight"></div>
+    <div class="hero2">
+      <div class="infoPanel"><h2>🔥 Heute spielen</h2><p>Wähle eine Kachel. Das Spiel öffnet sich direkt in GameGalaxy. Auf Touch-Geräten werden große, einfache Gesten verwendet; auf Computern funktionieren Tastatur und Maus.</p></div>
+      <div class="stats"><div class="stat"><b id="gameCount">10</b><span>Spiele</span></div><div class="stat"><b id="recentCount">0</b><span>Suchverlauf</span></div></div>
+    </div>
 
+    <div id="games" class="games">
+      <article class="gameCard" data-game="space" data-cat="action arcade">
+        <div><div class="thumb">🚀</div><div class="cardTop"><div class="cardTitle">Galaxy Blaster</div><div class="tag">ACTION</div></div><p>Raumschiff steuern, automatisch schießen und immer schneller werden. Später wartet der Endboss.</p></div>
+        <button class="cardButton" data-open="space">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="snake" data-cat="classic arcade">
+        <div><div class="thumb">🐍</div><div class="cardTop"><div class="cardTitle">Snake</div><div class="tag">KLASSIKER</div></div><p>Wischen oder Pfeiltasten. Durch Wände hindurch auf die andere Seite – genau wie gewünscht.</p></div>
+        <button class="cardButton" data-open="snake">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="time" data-cat="time arcade">
+        <div><div class="thumb">⏱️</div><div class="cardTop"><div class="cardTitle">Perfect Time</div><div class="tag">ZEIT</div></div><p>Stoppe den großen Buzzer möglichst genau. Das Ziel kann auch 1,25 Sekunden sein.</p></div>
+        <button class="cardButton" data-open="time">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="reaction" data-cat="time arcade">
+        <div><div class="thumb">⚡</div><div class="cardTop"><div class="cardTitle">Reaction Rush</div><div class="tag">REFLEX</div></div><p>Warte auf das Signal und tippe so schnell wie möglich.</p></div>
+        <button class="cardButton" data-open="reaction">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="memory" data-cat="puzzle classic">
+        <div><div class="thumb">🧠</div><div class="cardTop"><div class="cardTitle">Memory</div><div class="tag">PUZZLE</div></div><p>Finde alle Kartenpaare mit möglichst wenigen Zügen.</p></div>
+        <button class="cardButton" data-open="memory">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="2048" data-cat="puzzle classic">
+        <div><div class="thumb">🔢</div><div class="cardTop"><div class="cardTitle">2048</div><div class="tag">PUZZLE</div></div><p>Gleiche Zahlen zusammenführen und so weit wie möglich kommen.</p></div>
+        <button class="cardButton" data-open="2048">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="brick" data-cat="arcade">
+        <div><div class="thumb">🧱</div><div class="cardTop"><div class="cardTitle">Brick Blast</div><div class="tag">ARCADE</div></div><p>Ball zurückschlagen, Blöcke zerstören und die Runde überleben.</p></div>
+        <button class="cardButton" data-open="brick">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="tictactoe" data-cat="classic puzzle">
+        <div><div class="thumb">⭕</div><div class="cardTop"><div class="cardTitle">Tic-Tac-Toe</div><div class="tag">KLASSIKER</div></div><p>3×3 gegen die eingebaute Computer-Gegnerlogik.</p></div>
+        <button class="cardButton" data-open="tictactoe">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="tap" data-cat="arcade time">
+        <div><div class="thumb">🎯</div><div class="cardTop"><div class="cardTitle">Tap Target</div><div class="tag">SPEED</div></div><p>Treffe das Ziel so oft wie möglich, bevor die Zeit abläuft.</p></div>
+        <button class="cardButton" data-open="tap">Spielen</button>
+      </article>
+
+      <article class="gameCard" data-game="boss" data-cat="action arcade">
+        <div><div class="thumb">👑</div><div class="cardTop"><div class="cardTitle">Endboss Arena</div><div class="tag">BOSS</div></div><p>Direkt in die Bossrunde. Ausweichen, automatisch schießen und die Lebensleiste leeren.</p></div>
+        <button class="cardButton" data-open="boss">Boss-Level</button>
+      </article>
+    </div>
+    <div class="empty" id="empty">Keine Spiele gefunden. Suchbegriff ändern oder einen Filter auswählen.</div>
+  </div>
+</section>
+
+<div id="gameModal">
+  <div class="gameWindow">
+    <div class="gameHeader">
+      <h2 id="gameTitle">Spiel</h2>
+      <div class="gameHeadBtns"><button class="miniBtn" id="fullscreenBtn">⛶ Vollbild</button><button class="miniBtn danger" id="closeGame">✕</button></div>
+    </div>
+    <div class="gameBody" id="gameBody">
+      <canvas id="gameCanvas" width="900" height="560"></canvas>
+      <div id="touchLeft" class="touchZone left"></div><div id="touchRight" class="touchZone right"></div>
+      <div id="bossHud" class="bossHud"><div class="bossName">👑 END BOSS</div><div class="bossHp"><i id="bossHpBar"></i></div></div>
+      <div id="gameExtra"></div>
+    </div>
+    <div class="gameFooter" id="gameFooter">Touch/Maus/Tastatur wird je nach Spiel verwendet.</div>
+  </div>
 </div>
 
+<div id="fxLayer"></div>
+
+<div id="codeInfo" class="codeInfo">
+  <div class="codeBox">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px"><div><h2 style="margin:0">✨ GameGalaxy Geheimcodes</h2><p style="margin:6px 0 0;color:#9fa9c7">Alle funktionieren über die Suchleiste und werden nur als Website-Effekt verwendet.</p></div><button class="miniBtn danger" id="closeCodes">✕</button></div>
+    <div class="codeRow"><div class="codeKey">6 7</div><div class="codeDesc">Bildschirm wackelt kurz.</div></div>
+    <div class="codeRow"><div class="codeKey">low taper fade</div><div class="codeDesc">Ein großer Rasierer fährt von unten nach oben.</div></div>
+    <div class="codeRow"><div class="codeKey">minecraft</div><div class="codeDesc">Ein TNT-Block erscheint und explodiert.</div></div>
+    <div class="codeRow"><div class="codeKey">endboss</div><div class="codeDesc">Öffnet sofort die Endboss Arena.</div></div>
+    <div class="codeRow"><div class="codeKey">infobesteklasse7dgymwue</div><div class="codeDesc">Öffnet genau diese Geheimcode-Liste.</div></div>
+    <div class="codeRow"><div class="codeKey">gamegalaxy</div><div class="codeDesc">Kurzer Galaxy-Glitzer-Effekt.</div></div>
+    <div class="codeRow"><div class="codeKey">rocket</div><div class="codeDesc">Startet Galaxy Blaster.</div></div>
+    <div class="codeRow"><div class="codeKey">snake</div><div class="codeDesc">Startet Snake.</div></div>
+    <div class="codeRow"><div class="codeKey">time</div><div class="codeDesc">Öffnet Perfect Time.</div></div>
+  </div>
+</div>
 
 <script>
+'use strict';
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+/* =========================================================
+   GAMEGALAXY V3 — SINGLE-FILE GAME HUB
+   ========================================================= */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const landing = $('#landing');
+const arcade = $('#arcade');
+const modal = $('#gameModal');
+const canvas = $('#gameCanvas');
+const ctx = canvas.getContext('2d');
+const extra = $('#gameExtra');
+const footer = $('#gameFooter');
+const title = $('#gameTitle');
+const search = $('#search');
+const historyEl = $('#searchHistory');
+const codeInfo = $('#codeInfo');
+const fxLayer = $('#fxLayer');
+const leftZone = $('#touchLeft');
+const rightZone = $('#touchRight');
+const bossHud = $('#bossHud');
+const bossHpBar = $('#bossHpBar');
+let currentGame = null;
+let cleanupGame = null;
+let raf = 0;
+let filter = 'all';
+let activeTouch = null;
+let searchHistory = JSON.parse(localStorage.getItem('ggHistory') || '[]');
+let keys = Object.create(null);
 
-let currentGame = "";
-let animation;
-let keys = {};
+function setCanvasSize() {
+  const rect = canvas.getBoundingClientRect();
+  const cssW = Math.max(260, rect.width || 900);
+  const cssH = cssW * 560 / 900;
+  canvas.style.height = `${Math.min(cssH, Math.max(220, window.innerHeight * .68))}px`;
+}
+window.addEventListener('resize', setCanvasSize);
 
-document.addEventListener("keydown", e => {
-    keys[e.key] = true;
-});
+function stopRunning() { cancelAnimationFrame(raf); raf = 0; }
+function clearExtra(){extra.style.display='none';extra.innerHTML='';}
+function showExtra(html){extra.innerHTML=html;extra.style.display='grid';}
+function clearBoss(){bossHud.style.display='none'; bossHpBar.style.width='100%';}
 
-document.addEventListener("keyup", e => {
-    keys[e.key] = false;
-});
-
-function openGame(game) {
-
-    currentGame = game;
-
-    document.getElementById("gameScreen").style.display = "block";
-
-    if (game === "space") {
-        document.getElementById("gameTitle").textContent = "🚀 Galaxy Blaster";
-        spaceGame();
-    }
-
-    if (game === "snake") {
-        document.getElementById("gameTitle").textContent = "🐍 Snake";
-        snakeGame();
-    }
-
-    if (game === "jump") {
-        document.getElementById("gameTitle").textContent = "🏃 Jump Run";
-        jumpGame();
-    }
-
-    if (game === "dash") {
-        document.getElementById("gameTitle").textContent = "⚡ Neon Runner";
-        dashGame();
-    }
-
-    if (game === "time") {
-        document.getElementById("gameTitle").textContent = "⏱️ Perfect Time";
-        timeGame();
-    }
+function openArcade(){landing.style.display='none';arcade.style.display='block';setCanvasSize();search.focus();}
+function closeGameModal(){stopRunning(); if(cleanupGame) cleanupGame(); cleanupGame=null; currentGame=null; modal.style.display='none';clearExtra();clearBoss();leftZone.style.display='none';rightZone.style.display='none';document.body.style.overflow='auto';}
+function openGame(id){
+  stopRunning(); if(cleanupGame) cleanupGame(); cleanupGame=null; clearExtra(); clearBoss();
+  currentGame=id; modal.style.display='block'; document.body.style.overflow='hidden'; setCanvasSize();
+  const meta={
+    space:['🚀 Galaxy Blaster','ACTION · Automatisches Schießen · Touch links/rechts'],
+    snake:['🐍 Snake','KLASSIKER · Wischen oder Pfeiltasten · Wände verbinden sich'],
+    time:['⏱️ Perfect Time','ZEITSPIEL · Zielzeit treffen und Buzzer im richtigen Moment drücken'],
+    reaction:['⚡ Reaction Rush','REFLEX · Warte auf grün und tippe so schnell wie möglich'],
+    memory:['🧠 Memory','PUZZLE · Zwei Karten finden, alle Paare aufdecken'],
+    '2048':['🔢 2048','PUZZLE · Wischen, um die Zahlen zu verschieben'],
+    brick:['🧱 Brick Blast','ARCADE · Paddle bewegen, Ball zurückschlagen'],
+    tictactoe:['⭕ Tic-Tac-Toe','KLASSIKER · Du gegen Computer'],
+    tap:['🎯 Tap Target','SPEED · Ziel anklicken und Punkte sammeln'],
+    boss:['👑 Endboss Arena','BOSS · Große Lebensleiste, Ausweichen und Schießen']
+  };
+  title.textContent=meta[id][0]; footer.textContent=meta[id][1];
+  if(id==='space') startSpace(false);
+  if(id==='boss') startSpace(true);
+  if(id==='snake') startSnake();
+  if(id==='time') startTime();
+  if(id==='reaction') startReaction();
+  if(id==='memory') startMemory();
+  if(id==='2048') start2048();
+  if(id==='brick') startBrick();
+  if(id==='tictactoe') startTicTacToe();
+  if(id==='tap') startTap();
 }
 
-function closeGame() {
-    cancelAnimationFrame(animation);
-    document.getElementById("gameScreen").style.display = "none";
+function fullscreenGame(){
+  const el=$('.gameWindow');
+  const fn=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+  if(fn){try{fn.call(el)}catch(e){}}
 }
 
-function fullscreenGame() {
+$('#startArcade').addEventListener('click',openArcade);
+$('#showCodesFromLanding').addEventListener('click',()=>codeInfo.style.display='flex');
+$('#backHome').addEventListener('click',()=>{arcade.style.display='none';landing.style.display='flex';});
+$('#showCodes').addEventListener('click',()=>codeInfo.style.display='flex');
+$('#closeCodes').addEventListener('click',()=>codeInfo.style.display='none');
+$('#closeGame').addEventListener('click',closeGameModal);
+$('#fullscreenBtn').addEventListener('click',fullscreenGame);
+window.addEventListener('keydown',(e)=>{keys[e.key]=true;if(e.key==='Escape'&&modal.style.display==='block')closeGameModal();});
+window.addEventListener('keyup',(e)=>{keys[e.key]=false;});
 
-    const el = document.getElementById("gameScreen");
+/* ---------- SEARCH + FILTERS ---------- */
+function renderHistory(){
+  historyEl.innerHTML=searchHistory.map((q)=>`<button class="historyChip" data-history="${q.replace(/"/g,'&quot;')}">${escapeHtml(q)}</button>`).join('');
+  $('#recentCount').textContent=searchHistory.length;
+  $$('.historyChip').forEach(b=>b.addEventListener('click',()=>{search.value=b.dataset.history;applySearch(b.dataset.history,true);}));
+}
+function addHistory(q){if(!q)return;searchHistory=[q,...searchHistory.filter(x=>x!==q)].slice(0,8);localStorage.setItem('ggHistory',JSON.stringify(searchHistory));renderHistory();}
+function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function applySearch(q,save=false){
+  const query=q.trim().toLowerCase();
+  if(save&&query)addHistory(q.trim());
+  if(easterEgg(query)) return;
+  let visible=0;
+  $$('.gameCard').forEach(card=>{
+    const text=(card.innerText+' '+card.dataset.game+' '+card.dataset.cat).toLowerCase();
+    const okFilter=filter==='all'||card.dataset.cat.split(' ').includes(filter);
+    const okSearch=!query||text.includes(query);
+    card.style.display=okFilter&&okSearch?'flex':'none'; if(okFilter&&okSearch)visible++;
+  });
+  $('#empty').style.display=visible?'none':'block';
+}
+search.addEventListener('keydown',(e)=>{if(e.key==='Enter'){applySearch(search.value,true);}});
+search.addEventListener('input',()=>applySearch(search.value,false));
+$$('.filter').forEach(b=>b.addEventListener('click',()=>{$$('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.filter;applySearch(search.value,false);}));
+renderHistory();
 
-    if (el.requestFullscreen) {
-        el.requestFullscreen();
-    } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
+function easterEgg(q){
+  if(q==='6 7'||q==='67'||q==='6-7'){
+    addHistory(q);document.body.classList.remove('shake');void document.body.offsetWidth;document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),650);return true;
+  }
+  if(q==='low taper fade'){
+    addHistory(q);fxLayer.innerHTML='<div class="scan">🪒</div>';fxLayer.style.display='block';setTimeout(()=>fxLayer.style.display='none',1500);return true;
+  }
+  if(q==='minecraft'){
+    addHistory(q);fxLayer.innerHTML='<div class="tnt">🧨</div>';fxLayer.style.display='block';setTimeout(()=>{fxLayer.innerHTML='<div class="boom">💥</div>';},500);setTimeout(()=>fxLayer.style.display='none',1050);return true;
+  }
+  if(q==='endboss'){addHistory(q);openGame('boss');return true;}
+  if(q.replace(/^\./,'')==='infobesteklasse7dgymwue'){addHistory(q);codeInfo.style.display='flex';return true;}
+  if(q==='gamegalaxy'){addHistory(q);fxLayer.innerHTML='<div class="boom">✨</div>';fxLayer.style.display='block';setTimeout(()=>fxLayer.style.display='none',700);return true;}
+  if(q==='rocket'){addHistory(q);openGame('space');return true;}
+  if(q==='snake'){addHistory(q);openGame('snake');return true;}
+  if(q==='time'||q==='perfect time'){addHistory(q);openGame('time');return true;}
+  return false;
+}
+
+/* ---------- TOUCH BASE ---------- */
+function bindHoldZone(el,dir){
+  const press=(e)=>{e.preventDefault();if(activeTouch&&activeTouch.el!==el){releaseActive();}activeTouch={el,dir};el.classList.add('active');keys[dir]=true;};
+  const release=(e)=>{e.preventDefault();if(activeTouch?.el===el)releaseActive();};
+  el.addEventListener('pointerdown',press,{passive:false});el.addEventListener('pointerup',release,{passive:false});el.addEventListener('pointercancel',release,{passive:false});el.addEventListener('pointerleave',release,{passive:false});
+}
+function releaseActive(){if(!activeTouch)return;keys[activeTouch.dir]=false;activeTouch.el.classList.remove('active');activeTouch=null;}
+bindHoldZone(leftZone,'ArrowLeft');bindHoldZone(rightZone,'ArrowRight');
+
+/* ---------- SPACE / BOSS ---------- */
+function startSpace(bossMode){
+  leftZone.style.display='block';rightZone.style.display='block';
+  const W=900,H=560;
+  const player={x:W/2,y:H-82,w:42,h:50,speed:7};
+  const bullets=[],enemies=[],particles=[];
+  let score=0,lives=bossMode?5:3,frame=0,level=1,boss=null,over=false;
+  if(bossMode){boss={x:W/2,y:105,w:185,h:74,hp:260,maxHp:260,dir:1,cool:0};bossHud.style.display='block';bossHpBar.style.width='100%';}
+  else bossHud.style.display='none';
+  function spawnEnemy(){enemies.push({x:30+Math.random()*(W-60),y:-35,r:19,speed:2.0+Math.min(4,score/350),spin:Math.random()*6});}
+  function shoot(x,y,vx=0,vy=-10,kind='player'){bullets.push({x,y,vx,vy,kind,r:4});}
+  function explode(x,y,color='#ff5879'){for(let i=0;i<16;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,life:30,color});}
+  function reset(){score=0;lives=bossMode?5:3;frame=0;level=1;player.x=W/2;bullets.length=0;enemies.length=0;particles.length=0;boss=bossMode?{x:W/2,y:105,w:185,h:74,hp:260,maxHp:260,dir:1,cool:0}:null;over=false;}
+  canvas.onpointerdown=(e)=>{if(over){reset();return;}if(e.pointerType==='mouse'){const r=canvas.getBoundingClientRect();player.x=((e.clientX-r.left)/r.width)*W;}};
+  cleanupGame=()=>{canvas.onpointerdown=null;leftZone.style.display='none';rightZone.style.display='none';bossHud.style.display='none';};
+  function hit(a,b){return Math.abs(a.x-b.x)<(a.w? a.w/2:8)+(b.w?b.w/2:b.r||8)&&Math.abs(a.y-b.y)<(a.h?a.h/2:8)+(b.h?b.h/2:b.r||8)}
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    const grd=ctx.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#040615');grd.addColorStop(1,'#090e21');ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+    for(let i=0;i<70;i++){ctx.fillStyle=i%7===0?'#7ecfff':'#ffffff';ctx.globalAlpha=.5;ctx.fillRect((i*139)%W,(i*83+frame*(.4+(i%3)*.2))%H,2,2);}ctx.globalAlpha=1;
+    if(keys.ArrowLeft)player.x-=player.speed;if(keys.ArrowRight)player.x+=player.speed;player.x=Math.max(25,Math.min(W-25,player.x));
+    if(frame%7===0&&!over)shoot(player.x,player.y-25);
+    if(!bossMode&&frame%Math.max(20,44-level*4)===0&&!over)spawnEnemy();
+    for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];b.x+=b.vx;b.y+=b.vy;if(b.y<-30||b.y>H+30||b.x<-30||b.x>W+30)bullets.splice(i,1);}
+    if(bossMode){
+      boss.x+=boss.dir*(2.1+level*.25);if(boss.x<120||boss.x>W-120)boss.dir*=-1;
+      boss.cool--;if(boss.cool<=0&&!over){for(let s=-1;s<=1;s++)bullets.push({x:boss.x+s*28,y:boss.y+40,vx:s*1.7,vy:5.5,kind:'enemy',r:7});boss.cool=Math.max(26,55-level*3);}
+      ctx.fillStyle='#ff5a78';ctx.beginPath();ctx.roundRect(boss.x-boss.w/2,boss.y-boss.h/2,boss.w,boss.h,22);ctx.fill();
+      ctx.fillStyle='#140818';ctx.fillRect(boss.x-70,boss.y-16,140,34);ctx.fillStyle='#ffd46e';ctx.fillRect(boss.x-50,boss.y-8,100,8);ctx.fillStyle='#00e9ff';ctx.fillRect(boss.x-18,boss.y-10,36,20);
+      for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];if(b.kind==='player'&&Math.abs(b.x-boss.x)<boss.w/2&&Math.abs(b.y-boss.y)<boss.h/2){boss.hp-=4;bullets.splice(i,1);explode(b.x,b.y,'#ffc45c');score+=2;if(boss.hp<=0){explode(boss.x,boss.y,'#ff5577');over=true;}}}
+      bossHpBar.style.width=`${Math.max(0,boss.hp/boss.maxHp*100)}%`;
+      ctx.fillStyle='#fff';ctx.font='700 20px system-ui';ctx.fillText(`Score ${score}`,18,32);ctx.fillText(`❤️ ${lives}`,790,32);
     }
+    for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];e.y+=e.speed;e.spin+=.08;ctx.save();ctx.translate(e.x,e.y);ctx.rotate(e.spin);ctx.fillStyle='#ff334f';ctx.beginPath();ctx.arc(0,0,e.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ffc857';ctx.lineWidth=4;ctx.strokeRect(-10,-10,20,20);ctx.restore();if(e.y>H+30){enemies.splice(i,1);lives--;continue;}for(let j=bullets.length-1;j>=0;j--){const b=bullets[j];if(b.kind==='player'&&Math.hypot(b.x-e.x,b.y-e.y)<e.r+5){bullets.splice(j,1);enemies.splice(i,1);score+=10;explode(e.x,e.y);break;}}}
+    for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];if(b.kind==='enemy'&&Math.hypot(b.x-player.x,b.y-player.y)<28){bullets.splice(i,1);lives--;explode(player.x,player.y);}}
+    if(!bossMode&&score>=120+level*140){level++;if(level>=5&&score>=760){boss={x:W/2,y:105,w:185,h:74,hp:260,maxHp:260,dir:1,cool:0};bossMode=true;bossHud.style.display='block';}}
+    ctx.fillStyle='#39d9ff';ctx.beginPath();ctx.moveTo(player.x,player.y-27);ctx.lineTo(player.x-24,player.y+20);ctx.lineTo(player.x,player.y+11);ctx.lineTo(player.x+24,player.y+20);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(player.x-4,player.y-10,8,14);
+    for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life--;ctx.globalAlpha=p.life/30;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,4,4);if(p.life<=0)particles.splice(i,1);}ctx.globalAlpha=1;
+    ctx.fillStyle='#dbe7ff';ctx.font='700 18px system-ui';ctx.fillText(`Level ${bossMode?'BOSS':level}`,18,58);
+    if(over||lives<=0){over=true;ctx.fillStyle='rgba(4,5,10,.68)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 52px system-ui';ctx.fillText(lives>0?'BOSS BESIEGT!':'GAME OVER',W/2,H/2-10);ctx.font='700 20px system-ui';ctx.fillText('Tippen zum Neustart',W/2,H/2+34);ctx.textAlign='left';raf=requestAnimationFrame(loop);return;}
+    raf=requestAnimationFrame(loop);
+  }
+  reset();loop();
 }
 
+/* ---------- SNAKE ---------- */
+function startSnake(){
+  const N=20,cell=28;canvas.width=N*cell;canvas.height=N*cell;leftZone.style.display='none';rightZone.style.display='none';
+  let snake=[{x:8,y:10},{x:7,y:10},{x:6,y:10}],dir={x:1,y:0},nextDir={x:1,y:0},food=spawnFood(),score=0,over=false,last=0,swipeStart=null;
+  footer.textContent='Wischen: ↕ ↔ · Pfeiltasten · Wände verbinden sich';
+  function spawnFood(){let f;do{f={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)}}while(snake.some(s=>s.x===f.x&&s.y===f.y));return f;}
+  function setDir(dx,dy){if(dir.x===-dx&&dir.y===-dy)return;nextDir={x:dx,y:dy};}
+  const down=(e)=>{if(e.pointerType==='mouse')return;swipeStart={x:e.clientX,y:e.clientY};};
+  const up=(e)=>{if(!swipeStart)return;const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;swipeStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;if(Math.abs(dx)>Math.abs(dy))setDir(Math.sign(dx),0);else setDir(0,Math.sign(dy));};
+  canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointerup',up);
+  const onKey=(e)=>{if(e.key==='ArrowUp')setDir(0,-1);if(e.key==='ArrowDown')setDir(0,1);if(e.key==='ArrowLeft')setDir(-1,0);if(e.key==='ArrowRight')setDir(1,0);};window.addEventListener('keydown',onKey);
+  cleanupGame=()=>{canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointerup',up);window.removeEventListener('keydown',onKey);canvas.width=900;canvas.height=560;};
+  function step(){if(over)return;dir=nextDir;let h={x:(snake[0].x+dir.x+N)%N,y:(snake[0].y+dir.y+N)%N};if(snake.some(s=>s.x===h.x&&s.y===h.y)){over=true;return;}snake.unshift(h);if(h.x===food.x&&h.y===food.y){score+=10;food=spawnFood()}else snake.pop();}
+  function draw(t){if(t-last>100){step();last=t}ctx.fillStyle='#061009';ctx.fillRect(0,0,canvas.width,canvas.height);for(let y=0;y<N;y++){for(let x=0;x<N;x++){ctx.strokeStyle='#0d2617';ctx.strokeRect(x*cell,y*cell,cell,cell)}}ctx.fillStyle='#ff4266';ctx.beginPath();ctx.arc(food.x*cell+cell/2,food.y*cell+cell/2,cell*.35,0,Math.PI*2);ctx.fill();snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#8fffae':'#42d97d';ctx.fillRect(s.x*cell+2,s.y*cell+2,cell-4,cell-4)});ctx.fillStyle='#fff';ctx.font='700 18px system-ui';ctx.fillText(`Punkte ${score}`,10,22);if(over){ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.textAlign='center';ctx.font='900 42px system-ui';ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);ctx.font='700 18px system-ui';ctx.fillText('Spiel schließen und neu starten',canvas.width/2,canvas.height/2+34);ctx.textAlign='left';return}raf=requestAnimationFrame(draw)}
+  draw(0);
+}
 
-/* =========================
-   SPACE GAME
-========================= */
-
-function spaceGame() {
-
-    let player = {
-        x: 430,
-        y: 450,
-        w: 45,
-        h: 45,
-        speed: 7
+/* ---------- PERFECT TIME ---------- */
+function startTime(){canvas.style.display='none';clearBoss();leftZone.style.display='none';rightZone.style.display='none';
+  let target=pickTarget(),running=false,start=0,done=false;footer.textContent='Großer Buzzer: Start drücken, dann genau im Zielmoment erneut drücken.';
+  function pickTarget(){return +(Math.random()*3.75+.5).toFixed(2)}
+  function render(){showExtra(`<div class="timePanel"><div class="timeLabel">ZIELZEIT</div><div class="targetTime">${target.toFixed(2)} s</div><div class="scoreLine"><span class="scorePill">🎯 Genauigkeit: Millisekunden</span><span class="scorePill">🔥 Je näher, desto besser</span></div><button class="bigBuzzer" id="buzzer">START</button><div class="timeResult" id="timeResult">Bereit? Drücke den Buzzer.</div><button class="secondary" id="newTime" style="margin-top:8px">Neue Zielzeit</button></div>`);
+    $('#newTime').onclick=()=>{target=pickTarget();running=false;start=0;render();};
+    $('#buzzer').onclick=()=>{
+      const now=performance.now();
+      if(!running){running=true;done=false;start=now;$('#buzzer').textContent='STOPP';$('#timeResult').textContent='Jetzt zählen und im richtigen Moment stoppen …';return;}
+      const elapsed=(now-start)/1000;const diff=Math.abs(elapsed-target);running=false;done=true;$('#buzzer').textContent='NOCHMAL';let label=diff<.01?'PERFEKT!':diff<.05?'Sehr stark!':diff<.15?'Gut!':'Noch einmal!';$('#timeResult').innerHTML=`<b>${label}</b><br>Deine Zeit: <strong>${elapsed.toFixed(3)} s</strong><br>Abweichung: <strong>${(diff*1000).toFixed(0)} ms</strong>`;setTimeout(()=>{$('#newTime')?.focus?.()},50);
     };
-
-    let bullets = [];
-    let enemies = [];
-    let score = 0;
-    let lives = 3;
-    let frame = 0;
-
-    document.getElementById("gameMessage").textContent =
-        "← links · rechts → · Schießen automatisch";
-
-    function loop() {
-
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-
-        ctx.fillStyle = "#02040b";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-
-        /* Sterne */
-
-        for (let i=0;i<60;i++) {
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(
-                (i*97)%canvas.width,
-                (i*53+frame*0.5)%canvas.height,
-                2,2
-            );
-        }
-
-        /* Steuerung */
-
-        if (keys["ArrowLeft"]) player.x -= player.speed;
-        if (keys["ArrowRight"]) player.x += player.speed;
-
-        player.x = Math.max(0, Math.min(canvas.width-player.w, player.x));
-
-        /* Raumschiff */
-
-        ctx.fillStyle = "#36d9ff";
-        ctx.beginPath();
-        ctx.moveTo(player.x + 22, player.y);
-        ctx.lineTo(player.x, player.y + 42);
-        ctx.lineTo(player.x + 22, player.y + 32);
-        ctx.lineTo(player.x + 45, player.y + 42);
-        ctx.closePath();
-        ctx.fill();
-
-        /* automatisch schießen */
-
-        if (frame % 12 === 0) {
-            bullets.push({
-                x: player.x + 21,
-                y: player.y
-            });
-        }
-
-        ctx.fillStyle = "#ffe66d";
-
-        bullets.forEach(b => {
-            b.y -= 10;
-            ctx.fillRect(b.x,b.y,4,15);
-        });
-
-        bullets = bullets.filter(b => b.y > -20);
-
-        /* Bomben */
-
-        if (frame % 45 === 0) {
-
-            enemies.push({
-                x: Math.random()*850,
-                y: -30,
-                speed: 2 + score/800
-            });
-
-        }
-
-        enemies.forEach(e => {
-
-            e.y += e.speed;
-
-            ctx.fillStyle = "#ff304f";
-
-            ctx.beginPath();
-            ctx.arc(e.x,e.y,20,0,Math.PI*2);
-            ctx.fill();
-
-            ctx.strokeStyle = "#ffb000";
-            ctx.lineWidth = 4;
-
-            ctx.beginPath();
-            ctx.moveTo(e.x-12,e.y-12);
-            ctx.lineTo(e.x+12,e.y+12);
-            ctx.moveTo(e.x+12,e.y-12);
-            ctx.lineTo(e.x-12,e.y+12);
-            ctx.stroke();
-
-        });
-
-        /* Treffer */
-
-        bullets.forEach(b => {
-
-            enemies.forEach(e => {
-
-                if (
-                    b.x > e.x-22 &&
-                    b.x < e.x+22 &&
-                    b.y > e.y-22 &&
-                    b.y < e.y+22
-                ) {
-
-                    e.dead = true;
-                    b.dead = true;
-                    score += 10;
-
-                }
-
-            });
-
-        });
-
-        enemies = enemies.filter(e => {
-
-            if (e.dead) return false;
-
-            if (e.y > canvas.height) {
-                lives--;
-                return false;
-            }
-
-            return true;
-
-        });
-
-        bullets = bullets.filter(b => !b.dead);
-
-        ctx.fillStyle = "white";
-        ctx.font = "22px Arial";
-        ctx.fillText("Punkte: " + score,20,35);
-        ctx.fillText("❤️ " + lives,760,35);
-
-        if (lives <= 0) {
-
-            ctx.font = "48px Arial";
-            ctx.fillText("GAME OVER",300,280);
-            ctx.font = "24px Arial";
-            ctx.fillText("Tippe auf ✕ und starte erneut",300,320);
-            return;
-        }
-
-        frame++;
-
-        animation = requestAnimationFrame(loop);
-    }
-
-    loop();
+  }
+  cleanupGame=()=>{canvas.style.display='block';};
+  render();
 }
 
-
-/* =========================
-   SNAKE
-========================= */
-
-function snakeGame() {
-
-    let snake = [
-        {x:10,y:10},
-        {x:9,y:10},
-        {x:8,y:10}
-    ];
-
-    let dir = {x:1,y:0};
-
-    let food = randomFood();
-    let score = 0;
-
-    document.getElementById("gameMessage").textContent =
-        "Steuerung: Pfeiltasten";
-
-    function randomFood() {
-
-        return {
-            x: Math.floor(Math.random()*30),
-            y: Math.floor(Math.random()*18)
-        };
-
-    }
-
-    function loop() {
-
-        ctx.fillStyle = "#071009";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-
-        let head = {
-            x: snake[0].x + dir.x,
-            y: snake[0].y + dir.y
-        };
-
-        if (
-            head.x < 0 ||
-            head.y < 0 ||
-            head.x >= 30 ||
-            head.y >= 18 ||
-            snake.some(s => s.x === head.x && s.y === head.y)
-        ) {
-
-            ctx.fillStyle = "white";
-            ctx.font = "48px Arial";
-            ctx.fillText("GAME OVER",300,280);
-            return;
-
-        }
-
-        snake.unshift(head);
-
-        if (head.x === food.x && head.y === food.y) {
-
-            score += 10;
-            food = randomFood();
-
-        } else {
-
-            snake.pop();
-
-        }
-
-        snake.forEach(s => {
-
-            ctx.fillStyle = "#43ff70";
-            ctx.fillRect(s.x*30,s.y*30,28,28);
-
-        });
-
-        ctx.fillStyle = "#ff375f";
-        ctx.fillRect(food.x*30,food.y*30,28,28);
-
-        ctx.fillStyle = "white";
-        ctx.font = "22px Arial";
-        ctx.fillText("Punkte: "+score,20,530);
-
-        setTimeout(() => {
-            animation = requestAnimationFrame(loop);
-        },100);
-
-    }
-
-    document.onkeydown = function(e) {
-
-        if (e.key === "ArrowUp" && dir.y === 0)
-            dir={x:0,y:-1};
-
-        if (e.key === "ArrowDown" && dir.y === 0)
-            dir={x:0,y:1};
-
-        if (e.key === "ArrowLeft" && dir.x === 0)
-            dir={x:-1,y:0};
-
-        if (e.key === "ArrowRight" && dir.x === 0)
-            dir={x:1,y:0};
-
-    };
-
-    loop();
+/* ---------- REACTION ---------- */
+function startReaction(){canvas.style.display='none';leftZone.style.display='none';rightZone.style.display='none';let state='wait',timer=null,start=0,round=0,best=null;footer.textContent='Warte. Tippe erst, wenn der Buzzer grün wird.';
+  function render(msg='Warte …'){showExtra(`<div class="timePanel"><div class="timeLabel">REACTION RUSH</div><div class="targetTime" id="rxMsg">${msg}</div><div class="timeResult" id="rxResult">Runde ${round+1}</div><button class="bigBuzzer" id="rxBtn" style="background:${state==='go'?'radial-gradient(circle at 42% 34%,#7affb7,#16c978 55%,#0d7a4f)':'radial-gradient(circle at 42% 34%,#ff8ba3,#ff355e 55%,#a71031)'}">${state==='go'?'JETZT!':'WARTEN'}</button></div>`);$('#rxBtn').onclick=()=>{if(state==='go'){const ms=performance.now()-start;best=best===null?ms:Math.min(best,ms);round++;state='cool';$('#rxResult').innerHTML=`<b>${ms.toFixed(0)} ms</b> · Bestzeit ${best.toFixed(0)} ms`;setTimeout(newRound,1100);}else if(state==='wait'){clearTimeout(timer);state='fail';$('#rxMsg').textContent='Zu früh!';$('#rxResult').textContent='Drücke noch einmal, wenn du bereit bist.';}else if(state==='fail'){newRound();}};}
+  function newRound(){state='wait';render();timer=setTimeout(()=>{state='go';start=performance.now();render('JETZT!')},800+Math.random()*3000)}render('Bereit?');
+  cleanupGame=()=>{clearTimeout(timer);canvas.style.display='block';};
 }
 
-
-/* =========================
-   JUMP RUN
-========================= */
-
-function jumpGame() {
-
-    let player = {
-        x:100,
-        y:420,
-        vy:0,
-        jumping:false
-    };
-
-    let obstacles = [];
-    let score = 0;
-    let frame = 0;
-
-    document.getElementById("gameMessage").textContent =
-        "Tippe / drücke Leertaste zum Springen";
-
-    function jump() {
-
-        if (!player.jumping) {
-
-            player.vy = -15;
-            player.jumping = true;
-
-        }
-
-    }
-
-    canvas.ontouchstart = jump;
-
-    document.onkeydown = e => {
-
-        if (e.code === "Space") jump();
-
-    };
-
-    function loop() {
-
-        ctx.fillStyle = "#101936";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
-
-        player.vy += .7;
-        player.y += player.vy;
-
-        if (player.y >= 420) {
-
-            player.y = 420;
-            player.vy = 0;
-            player.jumping = false;
-
-        }
-
-        if (frame % 70 === 0) {
-
-            obstacles.push({
-                x:900,
-                y:430,
-                w:30,
-                h:40
-            });
-
-        }
-
-        obstacles.forEach(o => {
-
-            o.x -= 7;
-
-            ctx.fillStyle = "#ff4d67";
-            ctx.fillRect(o.x,o.y,o.w,o.h);
-
-            if (
-                player.x < o.x+o.w &&
-                player.x+35 > o.x &&
-                player.y+35 > o.y
-            ) {
-
-                ctx.fillStyle="white";
-                ctx.font="48px Arial";
-                ctx.fillText("GAME OVER",300,280);
-                return;
-
-            }
-
-        });
-
-        obstacles = obstacles.filter(o=>o.x>-50);
-
-        ctx.fillStyle="#4de1ff";
-        ctx.fillRect(player.x,player.y,35,35);
-
-        ctx.fillStyle="#40ff8a";
-        ctx.fillRect(0,455,900,95);
-
-        score++;
-
-        ctx.fillStyle="white";
-        ctx.font="22px Arial";
-        ctx.fillText("Punkte: "+score,20,35);
-
-        frame++;
-
-        animation=requestAnimationFrame(loop);
-
-    }
-
-    loop();
+/* ---------- MEMORY ---------- */
+function startMemory(){canvas.style.display='none';leftZone.style.display='none';rightZone.style.display='none';const icons=['🚀','🐍','⏱️','⚡','👑','🎯'];let deck=[...icons,...icons].sort(()=>Math.random()-.5);let open=[],matched=[],moves=0;function render(){showExtra(`<div class="extraPanel center"><h2 style="margin-top:0">🧠 Memory</h2><div class="choiceGrid" id="memGrid">${deck.map((v,i)=>`<button class="choice" data-i="${i}" style="font-size:34px">${matched.includes(i)||open.includes(i)?v:'❓'}</button>`).join('')}</div><p style="color:#9fa9c7">Züge: <b id="memMoves">${moves}</b></p><button class="secondary" id="memNew">Neue Runde</button></div>`);$$('[data-i]').forEach(b=>b.onclick=()=>pick(+b.dataset.i));$('#memNew').onclick=()=>{deck=[...icons,...icons].sort(()=>Math.random()-.5);open=[];matched=[];moves=0;render();};}
+  function pick(i){if(open.includes(i)||matched.includes(i)||open.length===2)return;open.push(i);render();if(open.length===2){moves++;const[a,b]=open;if(deck[a]===deck[b]){matched.push(a,b);open=[];render();if(matched.length===deck.length)setTimeout(()=>showExtra(`<div class="extraPanel center"><div class="statBig">🎉 Alles geschafft!</div><p>${moves} Züge.</p><button class="primary" id="memAgain">Nochmal</button></div>`),250)}else{setTimeout(()=>{open=[];render()},650)}}}
+  cleanupGame=()=>{canvas.style.display='block';};render();
 }
 
-
-/* =========================
-   NEON RUNNER
-========================= */
-
-function dashGame() {
-
-    let player = {
-        x:120,
-        y:400,
-        vy:0,
-        jumping:false
-    };
-
-    let blocks=[];
-    let score=0;
-    let frame=0;
-
-    document.getElementById("gameMessage").textContent =
-        "Springe über die Hindernisse";
-
-    function jump() {
-
-        if (!player.jumping) {
-
-            player.vy=-14;
-            player.jumping=true;
-
-        }
-
-    }
-
-    canvas.ontouchstart=jump;
-
-    document.onkeydown=e=>{
-
-        if(e.code==="Space" || e.key==="ArrowUp")
-            jump();
-
-    };
-
-    function loop(){
-
-        ctx.fillStyle="#0b0018";
-        ctx.fillRect(0,0,900,550);
-
-        player.vy+=.7;
-        player.y+=player.vy;
-
-        if(player.y>=400){
-
-            player.y=400;
-            player.vy=0;
-            player.jumping=false;
-
-        }
-
-        if(frame%55===0){
-
-            blocks.push({
-                x:900,
-                y:430,
-                w:35,
-                h:35
-            });
-
-        }
-
-        blocks.forEach(b=>{
-
-            b.x-=8;
-
-            ctx.fillStyle="#ff2bd6";
-            ctx.fillRect(b.x,b.y,b.w,b.h);
-
-            if(
-                player.x<b.x+b.w &&
-                player.x+35>b.x &&
-                player.y+35>b.y
-            ){
-
-                ctx.fillStyle="white";
-                ctx.font="48px Arial";
-                ctx.fillText("CRASH!",350,280);
-                return;
-
-            }
-
-        });
-
-        blocks=blocks.filter(b=>b.x>-50);
-
-        ctx.fillStyle="#00eaff";
-        ctx.fillRect(player.x,player.y,35,35);
-
-        ctx.fillStyle="#ffea00";
-        ctx.fillRect(0,440,900,110);
-
-        score++;
-
-        ctx.fillStyle="white";
-        ctx.font="22px Arial";
-        ctx.fillText("Score: "+score,20,35);
-
-        frame++;
-
-        animation=requestAnimationFrame(loop);
-
-    }
-
-    loop();
+/* ---------- 2048 ---------- */
+function start2048(){
+  canvas.style.display='none';leftZone.style.display='none';rightZone.style.display='none';
+  let board=Array(16).fill(0),score=0,over=false,won=false,swipeStart=null;
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  const labels={};
+  function addTile(){const free=board.map((v,i)=>v===0?i:-1).filter(i=>i>=0);if(!free.length)return false;const i=free[Math.floor(Math.random()*free.length)];board[i]=Math.random()<.9?2:4;return true;}
+  function render(){
+    showExtra(`<div class="extraPanel center"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2 style="margin:0">🔢 2048</h2><div class="scorePill">Score ${score}</div></div><div class="choiceGrid" style="grid-template-columns:repeat(4,1fr);margin-top:16px" id="grid2048">${board.map(v=>`<button class="choice" style="aspect-ratio:1;font-size:28px;font-weight:900;background:${v?'#1a2a4f':'#11192b'}">${v||''}</button>`).join('')}</div><p style="color:#9fa9c7">Wische auf dem Feld oder nutze die Pfeiltasten.</p><button class="secondary" id="new2048">Neue Runde</button>${over?`<p style="font-weight:900;font-size:20px">${won?'🎉 2048 geschafft!':'Keine Züge mehr.'}</p>`:''}</div>`);
+    $('#new2048').onclick=()=>start2048();
+    const g=$('#grid2048');
+    let sx=0,sy=0;
+    const down=e=>{swipeStart={x:e.clientX,y:e.clientY};};
+    const up=e=>{if(!swipeStart)return;const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;swipeStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1: -1,0);else move(0,dy>0?1:-1);};
+    g.addEventListener('pointerdown',down);g.addEventListener('pointerup',up);
+    cleanupGame=()=>{canvas.style.display='block';g.removeEventListener('pointerdown',down);g.removeEventListener('pointerup',up);window.removeEventListener('keydown',onKey);};
+  }
+  function collapse(line){const vals=line.filter(Boolean);for(let i=0;i<vals.length-1;i++){if(vals[i]===vals[i+1]){vals[i]*=2;score+=vals[i];if(vals[i]===2048)won=true;vals.splice(i+1,1);}}while(vals.length<4)vals.push(0);return vals;}
+  function move(dx,dy){if(over)return;const before=board.slice();
+    if(dx!==0){for(let y=0;y<4;y++){const line=[];for(let k=0;k<4;k++)line.push(board[y*4+(dx>0?3-k:k)]);const out=collapse(line);for(let k=0;k<4;k++)board[y*4+(dx>0?3-k:k)]=out[k];}}
+    else{for(let x=0;x<4;x++){const line=[];for(let k=0;k<4;k++)line.push(board[(dy>0?3-k:k)*4+x]);const out=collapse(line);for(let k=0;k<4;k++)board[(dy>0?3-k:k)*4+x]=out[k];}}
+    const changed=before.some((v,i)=>v!==board[i]);
+    if(changed){addTile();if(won)over=true;else if(!hasMoves())over=true;render();}
+  }
+  function hasMoves(){if(board.some(v=>v===0))return true;for(let y=0;y<4;y++)for(let x=0;x<4;x++){const v=board[y*4+x];if(x<3&&board[y*4+x+1]===v)return true;if(y<3&&board[(y+1)*4+x]===v)return true;}return false;}
+  function onKey(e){if(e.key==='ArrowLeft'){e.preventDefault();move(-1,0)}else if(e.key==='ArrowRight'){e.preventDefault();move(1,0)}else if(e.key==='ArrowUp'){e.preventDefault();move(0,-1)}else if(e.key==='ArrowDown'){e.preventDefault();move(0,1)}}
+  window.addEventListener('keydown',onKey);
+  addTile();addTile();render();
 }
+/* ---------- BRICK BLAST ---------- */
+function startBrick(){canvas.style.display='block';canvas.width=900;canvas.height=560;leftZone.style.display='none';rightZone.style.display='none';let paddleX=450,ball={x:450,y:470,vx:5,vy:-5,r:9},bricks=[],score=0,lives=3,over=false;for(let r=0;r<4;r++)for(let c=0;c<10;c++)bricks.push({x:40+c*82,y:60+r*30,w:70,h:20});const move=(e)=>{const r=canvas.getBoundingClientRect();paddleX=Math.max(60,Math.min(840,((e.clientX-r.left)/r.width)*900));};canvas.onpointermove=move;cleanupGame=()=>{canvas.onpointermove=null;leftZone.style.display='none';rightZone.style.display='none'};function loop(){ctx.fillStyle='#06101e';ctx.fillRect(0,0,900,560);if(keys.ArrowLeft)paddleX-=9;if(keys.ArrowRight)paddleX+=9;paddleX=Math.max(60,Math.min(840,paddleX));ball.x+=ball.vx;ball.y+=ball.vy;if(ball.x<10||ball.x>890)ball.vx*=-1;if(ball.y<10)ball.vy*=-1;if(ball.y>545){lives--;ball={x:paddleX,y:470,vx:(Math.random()>.5?1:-1)*5,vy:-5};if(lives<=0)over=true}if(ball.y+ball.r>500&&ball.y<530&&Math.abs(ball.x-paddleX)<85){ball.vy=-Math.abs(ball.vy);ball.vx+=((ball.x-paddleX)/85)*1.6}for(let i=bricks.length-1;i>=0;i--){const b=bricks[i];if(ball.x>b.x&&ball.x<b.x+b.w&&ball.y>b.y&&ball.y<b.y+b.h){bricks.splice(i,1);ball.vy*=-1;score+=10;break}}bricks.forEach((b,i)=>{ctx.fillStyle=`hsl(${i*17%360} 80% 55%)`;ctx.fillRect(b.x,b.y,b.w,b.h)});ctx.fillStyle='#f7f8ff';ctx.fillRect(paddleX-85,505,170,18);ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='700 18px system-ui';ctx.fillText(`Score ${score}`,20,28);ctx.fillText(`❤️ ${lives}`,790,28);if(bricks.length===0||over){ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,900,560);ctx.textAlign='center';ctx.font='900 44px system-ui';ctx.fillText(bricks.length===0?'GEWONNEN!':'GAME OVER',450,275);ctx.font='700 18px system-ui';ctx.fillText('Spiel schließen und neu starten',450,310);ctx.textAlign='left';raf=requestAnimationFrame(loop);return}raf=requestAnimationFrame(loop)}loop();}
 
+/* ---------- TIC TAC TOE ---------- */
+function startTicTacToe(){canvas.style.display='none';leftZone.style.display='none';rightZone.style.display='none';let board=Array(9).fill(''),turn='X',ended=false;function render(msg='Du bist X'){showExtra(`<div class="extraPanel center"><h2 style="margin-top:0">⭕ Tic-Tac-Toe</h2><div class="ticGrid">${board.map((v,i)=>`<button class="ticCell" data-i="${i}">${v}</button>`).join('')}</div><p>${msg}</p><button class="secondary" id="tttNew">Neue Runde</button></div>`);$$('.ticCell').forEach(b=>b.onclick=()=>playerMove(+b.dataset.i));$('#tttNew').onclick=()=>{board=Array(9).fill('');turn='X';ended=false;render()};}
+  function win(s){return [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(a=>a.every(i=>s[i]===turn))}
+  function playerMove(i){if(ended||board[i])return;board[i]='X';if(win(board)){ended=true;render('🎉 Du hast gewonnen!');return}if(board.every(Boolean)){ended=true;render('Unentschieden.');return}turn='O';render('Computer denkt …');setTimeout(aiMove,250);}
+  function aiMove(){const free=board.map((v,i)=>v?null:i).filter(v=>v!==null);if(!free.length)return;let best=free.find(i=>wouldWin(i,'O'));if(best===undefined)best=free.find(i=>wouldWin(i,'X'));if(best===undefined&&board[4]==='')best=4;if(best===undefined)best=free[Math.floor(Math.random()*free.length)];board[best]='O';if(win(board)){ended=true;turn='O';render('Computer gewinnt.');return}if(board.every(Boolean)){ended=true;turn='O';render('Unentschieden.');return}turn='X';render('Du bist X');}
+  function wouldWin(i,p){const prev=turn;turn=p;board[i]=p;const w=win(board);board[i]='';turn=prev;return w}
+  cleanupGame=()=>{canvas.style.display='block';};render();}
 
-/* =========================
-   PERFECT TIME
-========================= */
+/* ---------- TAP TARGET ---------- */
+function startTap(){canvas.style.display='block';canvas.width=900;canvas.height=560;leftZone.style.display='none';rightZone.style.display='none';let score=0,time=20,target={x:450,y:280,r:34},endAt=performance.now()+20000;function reposition(){target.x=50+Math.random()*800;target.y=80+Math.random()*410;target.r=Math.max(18,40-score*.5)}canvas.onpointerdown=(e)=>{const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*900,y=(e.clientY-r.top)/r.height*560;if(Math.hypot(x-target.x,y-target.y)<target.r){score++;reposition()}};cleanupGame=()=>{canvas.onpointerdown=null};function loop(){ctx.fillStyle='#07111f';ctx.fillRect(0,0,900,560);const remain=Math.max(0,endAt-performance.now());time=remain/1000;ctx.fillStyle='#233a5d';ctx.fillRect(20,20,240,18);ctx.fillStyle='#4de7ff';ctx.fillRect(20,20,240*(remain/20000),18);ctx.fillStyle='#fff';ctx.font='700 20px system-ui';ctx.fillText(`Treffer: ${score}`,20,70);ctx.fillText(`${time.toFixed(1)} s`,760,70);ctx.fillStyle='#ff5d85';ctx.beginPath();ctx.arc(target.x,target.y,target.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();if(remain<=0){ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,900,560);ctx.textAlign='center';ctx.font='900 44px system-ui';ctx.fillText('ZEIT AB!',450,260);ctx.font='700 20px system-ui';ctx.fillText(`Du hast ${score} Ziele getroffen.`,450,302);ctx.textAlign='left';raf=requestAnimationFrame(loop);return}raf=requestAnimationFrame(loop)}reposition();loop();}
 
-function timeGame() {
+/* ---------- MEMORY, 2048: canvas restoration ---------- */
 
-    let target = +(Math.random()*4+0.5).toFixed(2);
-    let start = 0;
-    let running = false;
+/* When opening normal modal games, canvas remains visible unless replaced by DOM UI. */
 
-    document.getElementById("gameMessage").innerHTML =
-        "<b>Zielzeit: "+target+" Sekunden</b><br><br>" +
-        "<button id='timeButton'>START</button>";
+/* Open cards */
+$$('[data-open]').forEach(b=>b.addEventListener('click',()=>openGame(b.dataset.open)));
 
-    document.getElementById("timeButton").onclick = function() {
+/* Global no-copy touch behavior on game modal */
+modal.addEventListener('contextmenu',e=>e.preventDefault());
+modal.addEventListener('selectstart',e=>e.preventDefault());
 
-        if(!running){
+/* Clean up modal when clicking backdrop outside the window */
+modal.addEventListener('click',e=>{if(e.target===modal)closeGameModal();});
 
-            start=performance.now();
-            running=true;
-            this.textContent="STOPP";
-
-        }else{
-
-            let elapsed=(performance.now()-start)/1000;
-            let difference=Math.abs(elapsed-target);
-
-            running=false;
-
-            this.textContent="NOCHMAL";
-
-            document.getElementById("gameMessage").innerHTML =
-                "<b>Ziel: "+target+" s</b><br>" +
-                "Deine Zeit: "+elapsed.toFixed(3)+" s<br>" +
-                "Abweichung: "+difference.toFixed(3)+" s<br><br>" +
-                "<button id='timeButton'>NEUE ZEIT</button>";
-
-            document.getElementById("timeButton").onclick=timeGame;
-
-        }
-
-    };
-
-    ctx.fillStyle="#0d1022";
-    ctx.fillRect(0,0,900,550);
-
-    ctx.fillStyle="#ffffff";
-    ctx.font="60px Arial";
-    ctx.textAlign="center";
-    ctx.fillText("⏱️",450,260);
-
-    ctx.font="26px Arial";
-    ctx.fillText("Wie genau bist du?",450,320);
-
-    ctx.textAlign="left";
-}
-
-
-/* Touch-Steuerung für Space */
-
-let leftPressed=false;
-let rightPressed=false;
-
-document.querySelector(".touchLeft").addEventListener("touchstart",e=>{
-    e.preventDefault();
-    keys["ArrowLeft"]=true;
-});
-
-document.querySelector(".touchLeft").addEventListener("touchend",e=>{
-    e.preventDefault();
-    keys["ArrowLeft"]=false;
-});
-
-document.querySelector(".touchRight").addEventListener("touchstart",e=>{
-    e.preventDefault();
-    keys["ArrowRight"]=true;
-});
-
-document.querySelector(".touchRight").addEventListener("touchend",e=>{
-    e.preventDefault();
-    keys["ArrowRight"]=false;
-});
-
+setCanvasSize();
 </script>
-
 </body>
 </html>
