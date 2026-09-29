@@ -1846,7 +1846,7281 @@ actionGame(id);
 
 }
 
-</script>
+<!-- =========================================================
+     GAMEGALAXY
+     TEIL 2
+     PROFESSIONELLE SPIELE
+     ========================================================= -->
 
+
+<script>
+
+
+/* =========================================================
+   🚀 GALAXY BLASTER
+   ========================================================= */
+
+function startGalaxy(){
+
+  const canvas=createCanvas(900,560);
+  const ctx=canvas.getContext("2d");
+
+  addRestartButton();
+
+  let running=true;
+
+  let player={
+    x:450,
+    y:485,
+    width:56,
+    height:34
+  };
+
+  let bullets=[];
+  let enemies=[];
+  let enemyBullets=[];
+  let particles=[];
+  let stars=[];
+
+  let points=0;
+  let level=1;
+
+  let lastShot=0;
+  let lastEnemy=0;
+  let lastBomb=0;
+
+  let spawnTimer=0;
+
+  let difficulty=1;
+
+
+  for(let i=0;i<120;i++){
+
+    stars.push({
+      x:rand(0,900),
+      y:rand(0,560),
+      size:rand(.5,2.4),
+      speed:rand(.3,1.7),
+      alpha:rand(.25,1)
+    });
+
+  }
+
+
+  function shoot(){
+
+    bullets.push({
+      x:player.x,
+      y:player.y-24,
+      speed:11
+    });
+
+  }
+
+
+  function spawnEnemy(){
+
+    const type=
+      Math.random()<.75
+      ?"ufo"
+      :"diamond";
+
+
+    enemies.push({
+
+      x:rand(45,855),
+      y:-40,
+
+      width:type==="ufo"?42:34,
+      height:type==="ufo"?27:34,
+
+      speed:
+        rand(
+          1.8,
+          3.2+level*.15
+        ),
+
+      type,
+
+      phase:rand(0,Math.PI*2),
+
+      hp:type==="ufo"?1:2
+
+    });
+
+  }
+
+
+  function explosion(x,y){
+
+    for(let i=0;i<18;i++){
+
+      particles.push({
+
+        x,
+        y,
+
+        vx:rand(-4,4),
+        vy:rand(-4,4),
+
+        life:rand(20,45),
+        size:rand(2,5)
+
+      });
+
+    }
+
+  }
+
+
+  function playerHit(){
+
+    explosion(
+      player.x,
+      player.y
+    );
+
+    points=Math.max(
+      0,
+      points-3
+    );
+
+    setScore(points);
+
+    player.x=450;
+
+  }
+
+
+  canvas.addEventListener(
+    "pointermove",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      player.x=
+        clamp(
+          p.x,
+          40,
+          860
+        );
+
+    }
+  );
+
+
+  canvas.addEventListener(
+    "pointerdown",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      player.x=
+        clamp(
+          p.x,
+          40,
+          860
+        );
+
+    }
+  );
+
+
+  window.onkeydown=
+    event=>{
+
+      if(event.key==="ArrowLeft")
+        player.x-=24;
+
+      if(event.key==="ArrowRight")
+        player.x+=24;
+
+    };
+
+
+  function drawStars(){
+
+    stars.forEach(star=>{
+
+      star.y+=star.speed;
+
+      if(star.y>560){
+
+        star.y=-3;
+        star.x=rand(0,900);
+
+      }
+
+      ctx.globalAlpha=
+        star.alpha;
+
+      ctx.fillStyle="#fff";
+
+      ctx.fillRect(
+        star.x,
+        star.y,
+        star.size,
+        star.size
+      );
+
+    });
+
+    ctx.globalAlpha=1;
+
+  }
+
+
+  function drawPlayer(){
+
+    ctx.save();
+
+    ctx.translate(
+      player.x,
+      player.y
+    );
+
+
+    /* Triebwerk */
+
+    const flame=
+      ctx.createLinearGradient(
+        0,
+        16,
+        0,
+        35
+      );
+
+    flame.addColorStop(
+      0,
+      "#fff4a3"
+    );
+
+    flame.addColorStop(
+      .45,
+      "#ff9e36"
+    );
+
+    flame.addColorStop(
+      1,
+      "#ff345f"
+    );
+
+    ctx.fillStyle=flame;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-10,12);
+    ctx.lineTo(0,34);
+    ctx.lineTo(10,12);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* Flügel */
+
+    ctx.fillStyle="#263d9d";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-11,-4);
+    ctx.lineTo(-31,15);
+    ctx.lineTo(-9,11);
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(11,-4);
+    ctx.lineTo(31,15);
+    ctx.lineTo(9,11);
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* Schiff */
+
+    const body=
+      ctx.createLinearGradient(
+        0,
+        -25,
+        0,
+        20
+      );
+
+    body.addColorStop(
+      0,
+      "#b9c9ff"
+    );
+
+    body.addColorStop(
+      .5,
+      "#536cff"
+    );
+
+    body.addColorStop(
+      1,
+      "#2639a4"
+    );
+
+    ctx.fillStyle=body;
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,-27);
+    ctx.lineTo(19,17);
+    ctx.lineTo(0,10);
+    ctx.lineTo(-19,17);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* Cockpit */
+
+    ctx.fillStyle="#72eaff";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      -7,
+      8,
+      11,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+
+  }
+
+
+  function drawEnemy(enemy){
+
+    ctx.save();
+
+    ctx.translate(
+      enemy.x,
+      enemy.y
+    );
+
+
+    if(enemy.type==="ufo"){
+
+      ctx.fillStyle="#8f4de8";
+
+      ctx.beginPath();
+
+      ctx.ellipse(
+        0,
+        0,
+        25,
+        12,
+        0,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+
+      ctx.fillStyle="#d7fbff";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        0,
+        -6,
+        10,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+
+      ctx.fillStyle="#53ffd1";
+
+      [-14,0,14].forEach(x=>{
+
+        ctx.beginPath();
+
+        ctx.arc(
+          x,
+          9,
+          4,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+      });
+
+    }else{
+
+      ctx.fillStyle="#ff466a";
+
+      ctx.beginPath();
+
+      ctx.moveTo(0,-22);
+      ctx.lineTo(20,0);
+      ctx.lineTo(0,22);
+      ctx.lineTo(-20,0);
+
+      ctx.closePath();
+
+      ctx.fill();
+
+
+      ctx.fillStyle="#ffe55e";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        0,
+        0,
+        7,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+    }
+
+    ctx.restore();
+
+  }
+
+
+  function gameLoop(time){
+
+    if(!running)
+      return;
+
+
+    if(time-lastShot>280){
+
+      shoot();
+
+      lastShot=time;
+
+    }
+
+
+    const spawnRate=
+      Math.max(
+        340,
+        1100-level*55
+      );
+
+
+    if(time-lastEnemy>spawnRate){
+
+      spawnEnemy();
+
+      lastEnemy=time;
+
+    }
+
+
+    const bombRate=
+      Math.max(
+        700,
+        1900-level*95
+      );
+
+
+    if(time-lastBomb>bombRate){
+
+      enemyBullets.push({
+
+        x:rand(35,865),
+        y:-20,
+        speed:rand(4,6)+level*.1
+
+      });
+
+      lastBomb=time;
+
+    }
+
+
+    bullets.forEach(
+      bullet=>{
+        bullet.y-=bullet.speed;
+      }
+    );
+
+
+    enemies.forEach(
+      enemy=>{
+
+        enemy.y+=enemy.speed;
+
+        enemy.x+=
+          Math.sin(
+            (time/550)+enemy.phase
+          )*.8;
+
+      }
+    );
+
+
+    enemyBullets.forEach(
+      bullet=>{
+        bullet.y+=bullet.speed;
+      }
+    );
+
+
+    for(const bullet of bullets){
+
+      for(const enemy of enemies){
+
+        if(
+          Math.abs(
+            bullet.x-enemy.x
+          )<
+          enemy.width/2+4
+          &&
+          Math.abs(
+            bullet.y-enemy.y
+          )<
+          enemy.height/2+9
+          &&
+          !bullet.hit
+        ){
+
+          bullet.hit=true;
+
+          enemy.hp--;
+
+          if(enemy.hp<=0){
+
+            enemy.dead=true;
+
+            points++;
+
+            explosion(
+              enemy.x,
+              enemy.y
+            );
+
+          }
+
+        }
+
+      }
+
+    }
+
+
+    for(const bullet of enemyBullets){
+
+      if(
+        Math.abs(
+          bullet.x-player.x
+        )<27
+        &&
+        Math.abs(
+          bullet.y-player.y
+        )<28
+      ){
+
+        bullet.dead=true;
+
+        playerHit();
+
+      }
+
+    }
+
+
+    for(const enemy of enemies){
+
+      if(
+        enemy.y>410 &&
+        Math.abs(
+          enemy.x-player.x
+        )<40
+      ){
+
+        enemy.dead=true;
+
+        playerHit();
+
+      }
+
+    }
+
+
+    bullets=
+      bullets.filter(
+        b=>b.y>-30&&!b.hit
+      );
+
+
+    enemies=
+      enemies.filter(
+        e=>!e.dead&&e.y<600
+      );
+
+
+    enemyBullets=
+      enemyBullets.filter(
+        b=>!b.dead&&b.y<600
+      );
+
+
+    particles.forEach(
+      particle=>{
+
+        particle.x+=particle.vx;
+        particle.y+=particle.vy;
+
+        particle.life--;
+
+        particle.vy+=.07;
+
+      }
+    );
+
+
+    particles=
+      particles.filter(
+        p=>p.life>0
+      );
+
+
+    if(
+      points>0 &&
+      points%15===0
+    ){
+
+      level=
+        Math.floor(
+          points/15
+        )+1;
+
+    }
+
+
+    setScore(points);
+    setLevel(level);
+    setStatus("Aktiv");
+
+
+    ctx.fillStyle="#050817";
+    ctx.fillRect(
+      0,
+      0,
+      900,
+      560
+    );
+
+
+    const space=
+      ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        560
+      );
+
+    space.addColorStop(
+      0,
+      "#070d2a"
+    );
+
+    space.addColorStop(
+      .55,
+      "#0a0e24"
+    );
+
+    space.addColorStop(
+      1,
+      "#160b27"
+    );
+
+    ctx.fillStyle=space;
+
+    ctx.fillRect(
+      0,
+      0,
+      900,
+      560
+    );
+
+
+    drawStars();
+
+
+    enemies.forEach(
+      drawEnemy
+    );
+
+
+    enemyBullets.forEach(
+      bullet=>{
+
+        const glow=
+          ctx.createRadialGradient(
+            bullet.x,
+            bullet.y,
+            0,
+            bullet.x,
+            bullet.y,
+            12
+          );
+
+        glow.addColorStop(
+          0,
+          "#fff9a8"
+        );
+
+        glow.addColorStop(
+          .3,
+          "#ffb437"
+        );
+
+        glow.addColorStop(
+          1,
+          "#ff425d00"
+        );
+
+        ctx.fillStyle=glow;
+
+        ctx.beginPath();
+
+        ctx.arc(
+          bullet.x,
+          bullet.y,
+          12,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+
+      }
+    );
+
+
+    bullets.forEach(
+      bullet=>{
+
+        ctx.fillStyle="#67eaff";
+
+        ctx.fillRect(
+          bullet.x-2,
+          bullet.y-12,
+          4,
+          12
+        );
+
+      }
+    );
+
+
+    particles.forEach(
+      particle=>{
+
+        ctx.globalAlpha=
+          particle.life/45;
+
+        ctx.fillStyle="#ffdb62";
+
+        ctx.fillRect(
+          particle.x,
+          particle.y,
+          particle.size,
+          particle.size
+        );
+
+      }
+    );
+
+    ctx.globalAlpha=1;
+
+
+    drawPlayer();
+
+
+    animationFrame=
+      requestAnimationFrame(
+        gameLoop
+      );
+
+  }
+
+
+  gameLoop(0);
+
+}
+
+
+/* =========================================================
+   🐍 SNAKE
+   ========================================================= */
+
+function startSnake(){
+
+  const canvas=
+    createCanvas(
+      720,
+      480
+    );
+
+  const ctx=
+    canvas.getContext("2d");
+
+  addRestartButton();
+
+
+  const cols=30;
+  const rows=20;
+  const cell=24;
+
+
+  let snake=[
+    {x:15,y:10},
+    {x:14,y:10},
+    {x:13,y:10},
+    {x:12,y:10}
+  ];
+
+
+  let direction={
+    x:1,
+    y:0
+  };
+
+
+  let nextDirection={
+    x:1,
+    y:0
+  };
+
+
+  let food={
+    x:22,
+    y:10
+  };
+
+
+  let running=true;
+  let points=0;
+  let speed=105;
+
+
+  function placeFood(){
+
+    do{
+
+      food={
+        x:randInt(0,cols-1),
+        y:randInt(0,rows-1)
+      };
+
+    }while(
+      snake.some(
+        part=>
+          part.x===food.x &&
+          part.y===food.y
+      )
+    );
+
+  }
+
+
+  function setDirection(
+    x,
+    y
+  ){
+
+    if(
+      direction.x+x===0 &&
+      direction.y+y===0
+    )
+      return;
+
+    nextDirection={x,y};
+
+  }
+
+
+  window.onkeydown=
+    event=>{
+
+      if(event.key==="ArrowUp")
+        setDirection(0,-1);
+
+      if(event.key==="ArrowDown")
+        setDirection(0,1);
+
+      if(event.key==="ArrowLeft")
+        setDirection(-1,0);
+
+      if(event.key==="ArrowRight")
+        setDirection(1,0);
+
+    };
+
+
+  let swipeX=0;
+  let swipeY=0;
+
+
+  canvas.addEventListener(
+    "pointerdown",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      swipeX=p.x;
+      swipeY=p.y;
+
+    }
+  );
+
+
+  canvas.addEventListener(
+    "pointerup",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      const dx=p.x-swipeX;
+      const dy=p.y-swipeY;
+
+
+      if(
+        Math.abs(dx)<
+        15
+        &&
+        Math.abs(dy)<
+        15
+      )
+        return;
+
+
+      if(
+        Math.abs(dx)>
+        Math.abs(dy)
+      ){
+
+        if(dx>0)
+          setDirection(1,0);
+        else
+          setDirection(-1,0);
+
+      }else{
+
+        if(dy>0)
+          setDirection(0,1);
+        else
+          setDirection(0,-1);
+
+      }
+
+    }
+  );
+
+
+  function drawBackground(){
+
+    ctx.fillStyle="#07101b";
+
+    ctx.fillRect(
+      0,
+      0,
+      720,
+      480
+    );
+
+
+    ctx.strokeStyle=
+      "#14263a";
+
+    ctx.lineWidth=1;
+
+
+    for(let x=0;x<=cols;x++){
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        x*cell,
+        0
+      );
+
+      ctx.lineTo(
+        x*cell,
+        480
+      );
+
+      ctx.stroke();
+
+    }
+
+
+    for(let y=0;y<=rows;y++){
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        0,
+        y*cell
+      );
+
+      ctx.lineTo(
+        720,
+        y*cell
+      );
+
+      ctx.stroke();
+
+    }
+
+  }
+
+
+  function drawFood(){
+
+    ctx.save();
+
+    ctx.translate(
+      food.x*cell+12,
+      food.y*cell+12
+    );
+
+
+    const glow=
+      ctx.createRadialGradient(
+        0,
+        0,
+        1,
+        0,
+        0,
+        15
+      );
+
+    glow.addColorStop(
+      0,
+      "#fff59b"
+    );
+
+    glow.addColorStop(
+      .35,
+      "#ffd43f"
+    );
+
+    glow.addColorStop(
+      1,
+      "#ff7c0000"
+    );
+
+    ctx.fillStyle=glow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      15,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#ffca36";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      1,
+      7,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#57d76f";
+
+    ctx.fillRect(
+      2,
+      -10,
+      4,
+      6
+    );
+
+    ctx.restore();
+
+  }
+
+
+  function drawSnake(){
+
+    snake.forEach(
+      (part,index)=>{
+
+        const px=
+          part.x*cell;
+
+        const py=
+          part.y*cell;
+
+
+        const gradient=
+          ctx.createLinearGradient(
+            px,
+            py,
+            px+cell,
+            py+cell
+          );
+
+
+        if(index===0){
+
+          gradient.addColorStop(
+            0,
+            "#9af28c"
+          );
+
+          gradient.addColorStop(
+            1,
+            "#28b86a"
+          );
+
+        }else{
+
+          gradient.addColorStop(
+            0,
+            "#4ce98c"
+          );
+
+          gradient.addColorStop(
+            1,
+            "#168f59"
+          );
+
+        }
+
+
+        ctx.fillStyle=
+          gradient;
+
+
+        ctx.beginPath();
+
+        ctx.roundRect(
+          px+2,
+          py+2,
+          cell-4,
+          cell-4,
+          7
+        );
+
+        ctx.fill();
+
+
+        if(index===0){
+
+          let eye1;
+          let eye2;
+
+
+          if(direction.x>0){
+
+            eye1=[
+              px+17,
+              py+7
+            ];
+
+            eye2=[
+              px+17,
+              py+17
+            ];
+
+          }else if(direction.x<0){
+
+            eye1=[
+              px+7,
+              py+7
+            ];
+
+            eye2=[
+              px+7,
+              py+17
+            ];
+
+          }else if(direction.y<0){
+
+            eye1=[
+              px+7,
+              py+7
+            ];
+
+            eye2=[
+              px+17,
+              py+7
+            ];
+
+          }else{
+
+            eye1=[
+              px+7,
+              py+17
+            ];
+
+            eye2=[
+              px+17,
+              py+17
+            ];
+
+          }
+
+
+          ctx.fillStyle="#fff";
+
+          [eye1,eye2].forEach(
+            eye=>{
+
+              ctx.beginPath();
+
+              ctx.arc(
+                eye[0],
+                eye[1],
+                3,
+                0,
+                Math.PI*2
+              );
+
+              ctx.fill();
+
+              ctx.fillStyle="#10151f";
+
+              ctx.beginPath();
+
+              ctx.arc(
+                eye[0],
+                eye[1],
+                1.4,
+                0,
+                Math.PI*2
+              );
+
+              ctx.fill();
+
+              ctx.fillStyle="#fff";
+
+            }
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+
+  function move(){
+
+    if(!running)
+      return;
+
+
+    direction=
+      nextDirection;
+
+
+    const head={
+      x:
+        (snake[0].x+
+          direction.x+
+          cols)%cols,
+
+      y:
+        (snake[0].y+
+          direction.y+
+          rows)%rows
+    };
+
+
+    const hitsSelf=
+      snake.some(
+        part=>
+          part.x===head.x &&
+          part.y===head.y
+      );
+
+
+    if(hitsSelf){
+
+      running=false;
+
+      setStatus("Game Over");
+      setMessage(
+        "Die Schlange hat sich selbst getroffen."
+      );
+
+      draw();
+
+      return;
+
+    }
+
+
+    snake.unshift(head);
+
+
+    if(
+      head.x===food.x &&
+      head.y===food.y
+    ){
+
+      points++;
+
+      setScore(points);
+
+      placeFood();
+
+      if(points%5===0){
+
+        speed=
+          Math.max(
+            55,
+            speed-5
+          );
+
+        setLevel(
+          Math.floor(
+            points/5
+          )+1
+        );
+
+      }
+
+    }else{
+
+      snake.pop();
+
+    }
+
+
+    draw();
+
+  }
+
+
+  function draw(){
+
+    drawBackground();
+    drawFood();
+    drawSnake();
+
+    setScore(points);
+    setStatus(
+      running
+      ?"Aktiv"
+      :"Game Over"
+    );
+
+  }
+
+
+  function schedule(){
+
+    if(!running)
+      return;
+
+
+    move();
+
+
+    addTimeout(
+      schedule,
+      speed
+    );
+
+  }
+
+
+  draw();
+
+  schedule();
+
+}
+
+
+/* =========================================================
+   ⏱️ PERFECT TIME
+   ========================================================= */
+
+function startPerfectTime(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const display=
+    document.createElement("div");
+
+  display.className=
+    "bigNumber";
+
+  display.textContent=
+    "0.000";
+
+  gameArea.appendChild(
+    display
+  );
+
+
+  let running=false;
+  let start=0;
+  let elapsed=0;
+
+
+  const startBtn=
+    document.createElement("button");
+
+  startBtn.className=
+    "gameButton";
+
+  startBtn.textContent=
+    "▶ Start";
+
+
+  const stopBtn=
+    document.createElement("button");
+
+  stopBtn.className=
+    "gameButton dangerButton";
+
+  stopBtn.textContent=
+    "⏹ Stop";
+
+
+  const resetBtn=
+    document.createElement("button");
+
+  resetBtn.className=
+    "gameButton secondaryButton";
+
+  resetBtn.textContent=
+    "🔄 Reset";
+
+
+  controls.append(
+    startBtn,
+    stopBtn,
+    resetBtn
+  );
+
+
+  function update(){
+
+    if(!running)
+      return;
+
+
+    elapsed=
+      (performance.now()-start)/
+      1000;
+
+
+    display.textContent=
+      elapsed.toFixed(3);
+
+
+    animationFrame=
+      requestAnimationFrame(
+        update
+      );
+
+  }
+
+
+  startBtn.onclick=()=>{
+
+    if(running)
+      return;
+
+
+    start=
+      performance.now()-
+      elapsed*1000;
+
+    running=true;
+
+    setStatus("Läuft");
+    setMessage(
+      "Ziel: genau 10.000 Sekunden"
+    );
+
+    update();
+
+  };
+
+
+  stopBtn.onclick=()=>{
+
+    if(!running)
+      return;
+
+
+    running=false;
+
+    if(animationFrame!==null){
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+      animationFrame=null;
+
+    }
+
+
+    const difference=
+      Math.abs(
+        elapsed-10
+      );
+
+
+    setStatus("Gestoppt");
+
+
+    if(
+      difference<=.05
+    ){
+
+      setMessage(
+        "🎯 Sehr nah an der perfekten Zeit!"
+      );
+
+    }else{
+
+      setMessage(
+        "Abweichung: "+
+        difference.toFixed(3)+
+        " Sekunden"
+      );
+
+    }
+
+  };
+
+
+  resetBtn.onclick=()=>{
+
+    running=false;
+    elapsed=0;
+
+    if(animationFrame!==null){
+
+      cancelAnimationFrame(
+        animationFrame
+      );
+
+      animationFrame=null;
+
+    }
+
+    display.textContent=
+      "0.000";
+
+    setStatus("Bereit");
+
+    setMessage(
+      "Ziel: genau 10.000 Sekunden"
+    );
+
+  };
+
+}
+
+
+/* =========================================================
+   ⚡ REACTION RUSH
+   ========================================================= */
+
+function startReactionRush(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const box=
+    document.createElement("button");
+
+  box.style.width="100%";
+  box.style.minHeight="280px";
+  box.style.borderRadius="22px";
+  box.style.fontSize="clamp(35px,10vw,70px)";
+  box.style.fontWeight="1000";
+  box.style.color="#fff";
+  box.style.background=
+    "linear-gradient(145deg,#7e2338,#451425)";
+  box.style.border=
+    "1px solid #b04961";
+
+  box.textContent=
+    "WARTEN";
+
+
+  gameArea.appendChild(
+    box
+  );
+
+
+  let ready=false;
+  let startTime=0;
+  let waiting=false;
+
+
+  function startRound(){
+
+    ready=false;
+    waiting=true;
+
+    box.textContent=
+      "WARTEN...";
+
+    box.style.background=
+      "linear-gradient(145deg,#7e2338,#451425)";
+
+
+    const delay=
+      randInt(
+        1400,
+        4200
+      );
+
+
+    addTimeout(
+      ()=>{
+
+        ready=true;
+        waiting=false;
+
+        startTime=
+          performance.now();
+
+
+        box.textContent=
+          "JETZT!";
+
+        box.style.background=
+          "linear-gradient(145deg,#20844d,#135230)";
+
+
+        setStatus(
+          "JETZT!"
+        );
+
+      },
+      delay
+    );
+
+  }
+
+
+  box.onclick=()=>{
+
+    if(waiting&&!ready){
+
+      waiting=false;
+
+      setMessage(
+        "❌ Zu früh!"
+      );
+
+      setStatus(
+        "Fehlstart"
+      );
+
+      return;
+
+    }
+
+
+    if(ready){
+
+      const ms=
+        Math.round(
+          performance.now()-
+          startTime
+        );
+
+
+      ready=false;
+
+
+      box.textContent=
+        ms+" ms";
+
+
+      box.style.background=
+        "linear-gradient(145deg,#233b70,#17264d)";
+
+
+      setScore(
+        Math.max(
+          0,
+          1000-ms
+        )
+      );
+
+
+      setStatus(
+        "Ergebnis"
+      );
+
+      setMessage(
+        "Reaktionszeit: "+
+        ms+
+        " Millisekunden"
+      );
+
+    }
+
+  };
+
+
+  startRound();
+
+}
+
+
+/* =========================================================
+   🧠 MEMORY
+   ========================================================= */
+
+function startMemory(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const grid=
+    document.createElement("div");
+
+  grid.className=
+    "memoryGrid";
+
+  gameArea.appendChild(
+    grid
+  );
+
+
+  const symbols=[
+    "🚀","🐍",
+    "⏱️","🧠",
+    "🧱","🏓",
+    "🐦","🎯"
+  ];
+
+
+  let cards=[
+    ...symbols,
+    ...symbols
+  ];
+
+
+  cards.sort(
+    ()=>Math.random()-.5
+  );
+
+
+  let first=null;
+  let second=null;
+  let locked=false;
+  let solved=0;
+  let points=0;
+
+
+  cards.forEach(
+    symbol=>{
+
+      const button=
+        document.createElement("button");
+
+      button.className=
+        "memoryCard";
+
+      button.textContent=
+        "❔";
+
+
+      button.dataset.symbol=
+        symbol;
+
+
+      button.onclick=()=>{
+
+        if(
+          locked||
+          button.classList.contains("open")
+        )
+          return;
+
+
+        button.classList.add("open");
+
+        button.textContent=
+          symbol;
+
+
+        if(!first){
+
+          first=button;
+
+          return;
+
+        }
+
+
+        second=button;
+
+        locked=true;
+
+
+        if(
+          first.dataset.symbol===
+          second.dataset.symbol
+        ){
+
+          solved++;
+
+          points+=
+            10;
+
+          setScore(
+            points
+          );
+
+
+          first.disabled=true;
+          second.disabled=true;
+
+
+          first=null;
+          second=null;
+
+          locked=false;
+
+
+          if(solved===8){
+
+            setStatus(
+              "Gewonnen!"
+            );
+
+            setMessage(
+              "🎉 Alle Paare gefunden!"
+            );
+
+          }
+
+        }else{
+
+          addTimeout(
+            ()=>{
+
+              first.classList.remove(
+                "open"
+              );
+
+              second.classList.remove(
+                "open"
+              );
+
+              first.textContent=
+                "❔";
+
+              second.textContent=
+                "❔";
+
+              first=null;
+              second=null;
+
+              locked=false;
+
+            },
+            750
+          );
+
+        }
+
+      };
+
+
+      grid.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  setMessage(
+    "Finde alle 8 Paare."
+  );
+
+}
+
+
+/* =========================================================
+   🔢 2048
+   ========================================================= */
+
+function start2048(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const boardEl=
+    document.createElement("div");
+
+  boardEl.className=
+    "board2048";
+
+  gameArea.appendChild(
+    boardEl
+  );
+
+
+  let board=
+    new Array(16).fill(0);
+
+
+  let totalScore=0;
+
+
+  function addTile(){
+
+    const free=[];
+
+
+    board.forEach(
+      (value,index)=>{
+
+        if(value===0)
+          free.push(index);
+
+      }
+    );
+
+
+    if(!free.length)
+      return false;
+
+
+    const index=
+      free[
+        randInt(
+          0,
+          free.length-1
+        )
+      ];
+
+
+    board[index]=
+      Math.random()<.9
+      ?2
+      :4;
+
+
+    return true;
+
+  }
+
+
+  function draw(){
+
+    boardEl.innerHTML="";
+
+
+    board.forEach(
+      value=>{
+
+        const cell=
+          document.createElement("div");
+
+        cell.className=
+          "tile2048";
+
+        cell.textContent=
+          value||"";
+
+
+        const colors={
+
+          0:"#202640",
+          2:"#e9eefb",
+          4:"#ced9ff",
+          8:"#a5b8ff",
+          16:"#7c95ff",
+          32:"#637dff",
+          64:"#5266ea",
+          128:"#e9c95b",
+          256:"#e5b83d",
+          512:"#dcae2e",
+          1024:"#d99a1e",
+          2048:"#ffd457"
+
+        };
+
+
+        cell.style.background=
+          colors[value]||
+          "#ff9b32";
+
+
+        if(value>=8)
+          cell.style.color=
+            "#fff";
+
+
+        boardEl.appendChild(
+          cell
+        );
+
+      }
+    );
+
+
+    setScore(
+      totalScore
+    );
+
+  }
+
+
+  function slideLine(line){
+
+    const filtered=
+      line.filter(
+        value=>value!==0
+      );
+
+
+    for(
+      let i=0;
+      i<filtered.length-1;
+      i++
+    ){
+
+      if(
+        filtered[i]===
+        filtered[i+1]
+      ){
+
+        filtered[i]*=2;
+
+        totalScore+=
+          filtered[i];
+
+        filtered[i+1]=0;
+
+      }
+
+    }
+
+
+    const result=
+      filtered.filter(
+        value=>value!==0
+      );
+
+
+    while(
+      result.length<4
+    )
+      result.push(0);
+
+
+    return result;
+
+  }
+
+
+  function move(direction){
+
+    const before=
+      board.join(",");
+
+
+    const next=
+      new Array(16).fill(0);
+
+
+    for(
+      let lineIndex=0;
+      lineIndex<4;
+      lineIndex++
+    ){
+
+      let line=[];
+
+
+      for(
+        let i=0;
+        i<4;
+        i++
+      ){
+
+        let index;
+
+
+        if(
+          direction==="left"||
+          direction==="right"
+        ){
+
+          index=
+            lineIndex*4+i;
+
+        }else{
+
+          index=
+            i*4+lineIndex;
+
+        }
+
+
+        line.push(
+          board[index]
+        );
+
+      }
+
+
+      if(
+        direction==="right"||
+        direction==="down"
+      ){
+
+        line.reverse();
+
+      }
+
+
+      line=
+        slideLine(
+          line
+        );
+
+
+      if(
+        direction==="right"||
+        direction==="down"
+      ){
+
+        line.reverse();
+
+      }
+
+
+      for(
+        let i=0;
+        i<4;
+        i++
+      ){
+
+        let index;
+
+
+        if(
+          direction==="left"||
+          direction==="right"
+        ){
+
+          index=
+            lineIndex*4+i;
+
+        }else{
+
+          index=
+            i*4+lineIndex;
+
+        }
+
+
+        next[index]=
+          line[i];
+
+      }
+
+    }
+
+
+    board=next;
+
+
+    const after=
+      board.join(",");
+
+
+    if(before!==after){
+
+      addTile();
+
+    }
+
+
+    draw();
+
+
+    if(
+      board.includes(2048)
+    ){
+
+      setStatus(
+        "Gewonnen!"
+      );
+
+      setMessage(
+        "🏆 Du hast 2048 erreicht!"
+      );
+
+    }
+
+  }
+
+
+  window.onkeydown=
+    event=>{
+
+      const keys={
+        ArrowLeft:"left",
+        ArrowRight:"right",
+        ArrowUp:"up",
+        ArrowDown:"down"
+      };
+
+
+      if(keys[event.key]){
+
+        event.preventDefault();
+
+        move(
+          keys[event.key]
+        );
+
+      }
+
+    };
+
+
+  let swipeX=0;
+  let swipeY=0;
+
+
+  boardEl.onpointerdown=
+    event=>{
+
+      swipeX=
+        event.clientX;
+
+      swipeY=
+        event.clientY;
+
+    };
+
+
+  boardEl.onpointerup=
+    event=>{
+
+      const dx=
+        event.clientX-swipeX;
+
+      const dy=
+        event.clientY-swipeY;
+
+
+      if(
+        Math.max(
+          Math.abs(dx),
+          Math.abs(dy)
+        )<25
+      )
+        return;
+
+
+      if(
+        Math.abs(dx)>
+        Math.abs(dy)
+      ){
+
+        move(
+          dx>0
+          ?"right"
+          :"left"
+        );
+
+      }else{
+
+        move(
+          dy>0
+          ?"down"
+          :"up"
+        );
+
+      }
+
+    };
+
+
+  addTile();
+  addTile();
+
+  draw();
+
+  setMessage(
+    "Wischen oder Pfeiltasten benutzen."
+  );
+
+}
+
+
+/* =========================================================
+   🧱 BRICK BLAST
+   ========================================================= */
+
+function startBrickBlast(){
+
+  const canvas=
+    createCanvas(
+      800,
+      520
+    );
+
+  const ctx=
+    canvas.getContext("2d");
+
+  addRestartButton();
+
+
+  let paddle={
+    x:400,
+    y:480,
+    width:110,
+    height:16
+  };
+
+
+  let ball={
+    x:400,
+    y:450,
+    radius:9,
+    vx:4.2,
+    vy:-4.8
+  };
+
+
+  let bricks=[];
+
+  const rows=6;
+  const cols=10;
+
+
+  let points=0;
+  let lives=3;
+  let running=true;
+
+
+  const brickWidth=68;
+  const brickHeight=24;
+  const gap=8;
+
+
+  function createBricks(){
+
+    bricks=[];
+
+
+    for(
+      let row=0;
+      row<rows;
+      row++
+    ){
+
+      for(
+        let col=0;
+        col<cols;
+        col++
+      ){
+
+        bricks.push({
+
+          x:
+            20+
+            col*
+            (brickWidth+gap),
+
+          y:
+            45+
+            row*
+            (brickHeight+gap),
+
+          width:
+            brickWidth,
+
+          height:
+            brickHeight,
+
+          alive:true,
+
+          hp:
+            row<2
+            ?2
+            :1
+
+        });
+
+      }
+
+    }
+
+  }
+
+
+  function resetBall(){
+
+    ball.x=400;
+    ball.y=445;
+
+    ball.vx=
+      Math.random()<.5
+      ?-4.2
+      :4.2;
+
+    ball.vy=-4.8;
+
+  }
+
+
+  function drawBricks(){
+
+    bricks.forEach(
+      brick=>{
+
+        if(!brick.alive)
+          return;
+
+
+        const gradient=
+          ctx.createLinearGradient(
+            brick.x,
+            brick.y,
+            brick.x,
+            brick.y+
+            brick.height
+          );
+
+
+        if(brick.hp===2){
+
+          gradient.addColorStop(
+            0,
+            "#ff6f86"
+          );
+
+          gradient.addColorStop(
+            1,
+            "#bc294b"
+          );
+
+        }else{
+
+          gradient.addColorStop(
+            0,
+            "#6779ff"
+          );
+
+          gradient.addColorStop(
+            1,
+            "#3446b7"
+          );
+
+        }
+
+
+        ctx.fillStyle=
+          gradient;
+
+
+        ctx.beginPath();
+
+        ctx.roundRect(
+          brick.x,
+          brick.y,
+          brick.width,
+          brick.height,
+          6
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle="#ffffff33";
+
+        ctx.fillRect(
+          brick.x+5,
+          brick.y+4,
+          brick.width-10,
+          3
+        );
+
+      }
+    );
+
+  }
+
+
+  function updatePaddle(){
+
+    paddle.x=
+      clamp(
+        paddle.x,
+        paddle.width/2,
+        800-
+        paddle.width/2
+      );
+
+  }
+
+
+  canvas.addEventListener(
+    "pointermove",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      paddle.x=p.x;
+
+      updatePaddle();
+
+    }
+  );
+
+
+  window.onkeydown=
+    event=>{
+
+      if(event.key==="ArrowLeft")
+        paddle.x-=28;
+
+      if(event.key==="ArrowRight")
+        paddle.x+=28;
+
+      updatePaddle();
+
+    };
+
+
+  function ballHitsBrick(
+    brick
+  ){
+
+    const closestX=
+      clamp(
+        ball.x,
+        brick.x,
+        brick.x+
+        brick.width
+      );
+
+
+    const closestY=
+      clamp(
+        ball.y,
+        brick.y,
+        brick.y+
+        brick.height
+      );
+
+
+    const dx=
+      ball.x-closestX;
+
+    const dy=
+      ball.y-closestY;
+
+
+    return(
+      dx*dx+
+      dy*dy
+      <=
+      ball.radius*
+      ball.radius
+    );
+
+  }
+
+
+  function resetGameBall(){
+
+    lives--;
+
+    setStatus(
+      "Leben: "+lives
+    );
+
+
+    if(lives<=0){
+
+      running=false;
+
+      setMessage(
+        "💥 Game Over"
+      );
+
+      return;
+
+    }
+
+
+    resetBall();
+
+  }
+
+
+  function update(){
+
+    if(!running)
+      return;
+
+
+    const previousX=
+      ball.x;
+
+    const previousY=
+      ball.y;
+
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+
+    if(
+      ball.x-ball.radius<0
+      ||
+      ball.x+
+      ball.radius>800
+    ){
+
+      ball.vx*=-1;
+
+      ball.x=
+        clamp(
+          ball.x,
+          ball.radius,
+          800-ball.radius
+        );
+
+    }
+
+
+    if(
+      ball.y-ball.radius<0
+    ){
+
+      ball.vy=
+        Math.abs(ball.vy);
+
+    }
+
+
+    if(
+      ball.y+
+      ball.radius>=
+      paddle.y
+      &&
+      ball.y-
+      ball.radius<
+      paddle.y+
+      paddle.height
+      &&
+      ball.x>=
+      paddle.x-
+      paddle.width/2
+      &&
+      ball.x<=
+      paddle.x+
+      paddle.width/2
+      &&
+      ball.vy>0
+    ){
+
+      const hit=
+        (
+          ball.x-
+          paddle.x
+        )/
+        (paddle.width/2);
+
+
+      ball.vx=
+        hit*6.5;
+
+
+      ball.vy=
+        -Math.abs(
+          ball.vy
+        );
+
+
+      ball.y=
+        paddle.y-
+        ball.radius-
+        1;
+
+    }
+
+
+    for(const brick of bricks){
+
+      if(!brick.alive)
+        continue;
+
+
+      if(
+        ballHitsBrick(
+          brick
+        )
+      ){
+
+        brick.hp--;
+
+
+        if(
+          brick.hp<=0
+        ){
+
+          brick.alive=false;
+
+          points++;
+
+          setScore(
+            points
+          );
+
+        }
+
+
+        /*
+          Seite bestimmen.
+          Dadurch springt der Ball nicht
+          einfach zufällig durch den Block.
+        */
+
+        const previousInsideX=
+          previousX>=brick.x &&
+          previousX<=brick.x+
+          brick.width;
+
+
+        const previousInsideY=
+          previousY>=brick.y &&
+          previousY<=brick.y+
+          brick.height;
+
+
+        if(
+          !previousInsideX
+        ){
+
+          ball.vx*=-1;
+
+        }else if(
+          !previousInsideY
+        ){
+
+          ball.vy*=-1;
+
+        }else{
+
+          ball.vy*=-1;
+
+        }
+
+
+        break;
+
+      }
+
+    }
+
+
+    if(
+      ball.y-ball.radius>520
+    ){
+
+      resetGameBall();
+
+    }
+
+
+    if(
+      bricks.every(
+        brick=>!brick.alive
+      )
+    ){
+
+      running=false;
+
+      setStatus(
+        "Gewonnen!"
+      );
+
+      setMessage(
+        "🏆 Alle Blöcke zerstört!"
+      );
+
+    }
+
+  }
+
+
+  function draw(){
+
+    ctx.fillStyle=
+      "#070a16";
+
+    ctx.fillRect(
+      0,
+      0,
+      800,
+      520
+    );
+
+
+    const background=
+      ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        520
+      );
+
+    background.addColorStop(
+      0,
+      "#121939"
+    );
+
+    background.addColorStop(
+      1,
+      "#090b16"
+    );
+
+    ctx.fillStyle=
+      background;
+
+    ctx.fillRect(
+      0,
+      0,
+      800,
+      520
+    );
+
+
+    drawBricks();
+
+
+    /* Paddle */
+
+    const paddleGradient=
+      ctx.createLinearGradient(
+        0,
+        paddle.y,
+        0,
+        paddle.y+
+        paddle.height
+      );
+
+    paddleGradient.addColorStop(
+      0,
+      "#b8c5ff"
+    );
+
+    paddleGradient.addColorStop(
+      .45,
+      "#6076ff"
+    );
+
+    paddleGradient.addColorStop(
+      1,
+      "#3449c4"
+    );
+
+    ctx.fillStyle=
+      paddleGradient;
+
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+      paddle.x-
+      paddle.width/2,
+      paddle.y,
+      paddle.width,
+      paddle.height,
+      8
+    );
+
+    ctx.fill();
+
+
+    /* Ball Glow */
+
+    const glow=
+      ctx.createRadialGradient(
+        ball.x,
+        ball.y,
+        1,
+        ball.x,
+        ball.y,
+        24
+      );
+
+    glow.addColorStop(
+      0,
+      "#ffffff"
+    );
+
+    glow.addColorStop(
+      .25,
+      "#7eeeff"
+    );
+
+    glow.addColorStop(
+      1,
+      "#68dcff00"
+    );
+
+    ctx.fillStyle=glow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      24,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      ball.radius,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    setScore(points);
+    setStatus(
+      "Leben: "+lives
+    );
+
+
+    update();
+
+
+    animationFrame=
+      requestAnimationFrame(
+        draw
+      );
+
+  }
+
+
+  createBricks();
+
+  setMessage(
+    "Steuere den Schläger mit Finger oder Maus."
+  );
+
+  draw();
+
+}
+
+
+/* =========================================================
+   ⭕ TIC-TAC-TOE
+   ========================================================= */
+
+function startTicTacToe(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const grid=
+    document.createElement("div");
+
+  grid.className=
+    "tttGrid";
+
+  gameArea.appendChild(
+    grid
+  );
+
+
+  const board=
+    Array(9).fill("");
+
+
+  let gameOver=false;
+
+
+  function winner(
+    state
+  ){
+
+    const lines=[
+
+      [0,1,2],
+      [3,4,5],
+      [6,7,8],
+
+      [0,3,6],
+      [1,4,7],
+      [2,5,8],
+
+      [0,4,8],
+      [2,4,6]
+
+    ];
+
+
+    for(
+      const [a,b,c]
+      of lines
+    ){
+
+      if(
+        state[a] &&
+        state[a]===
+        state[b] &&
+        state[a]===
+        state[c]
+      ){
+
+        return state[a];
+
+      }
+
+    }
+
+
+    if(
+      state.every(
+        cell=>cell!==""
+      )
+    )
+      return "draw";
+
+
+    return null;
+
+  }
+
+
+  function minimax(
+    state,
+    maximizing
+  ){
+
+    const result=
+      winner(state);
+
+
+    if(result==="O")
+      return 10;
+
+
+    if(result==="X")
+      return -10;
+
+
+    if(result==="draw")
+      return 0;
+
+
+    if(maximizing){
+
+      let best=-Infinity;
+
+
+      for(
+        let i=0;
+        i<9;
+        i++
+      ){
+
+        if(
+          state[i]===""
+        ){
+
+          state[i]="O";
+
+          const value=
+            minimax(
+              state,
+              false
+            );
+
+          state[i]="";
+
+          best=
+            Math.max(
+              best,
+              value
+            );
+
+        }
+
+      }
+
+
+      return best;
+
+    }else{
+
+      let best=Infinity;
+
+
+      for(
+        let i=0;
+        i<9;
+        i++
+      ){
+
+        if(
+          state[i]===""
+        ){
+
+          state[i]="X";
+
+          const value=
+            minimax(
+              state,
+              true
+            );
+
+          state[i]="";
+
+          best=
+            Math.min(
+              best,
+              value
+            );
+
+        }
+
+      }
+
+
+      return best;
+
+    }
+
+  }
+
+
+  function aiMove(){
+
+    let best=-Infinity;
+    let bestMove=-1;
+
+
+    for(
+      let i=0;
+      i<9;
+      i++
+    ){
+
+      if(
+        board[i]===""
+      ){
+
+        board[i]="O";
+
+
+        const value=
+          minimax(
+            board,
+            false
+          );
+
+
+        board[i]="";
+
+
+        if(value>best){
+
+          best=value;
+          bestMove=i;
+
+        }
+
+      }
+
+    }
+
+
+    if(bestMove>=0)
+      board[bestMove]="O";
+
+  }
+
+
+  function render(){
+
+    grid.innerHTML="";
+
+
+    board.forEach(
+      (value,index)=>{
+
+        const cell=
+          document.createElement("button");
+
+        cell.className=
+          "tttCell";
+
+        cell.textContent=
+          value;
+
+
+        if(value==="X")
+          cell.style.color=
+            "#6fdaff";
+
+
+        if(value==="O")
+          cell.style.color=
+            "#ff6b83";
+
+
+        cell.onclick=()=>{
+
+          if(
+            gameOver||
+            board[index]!==""
+          )
+            return;
+
+
+          board[index]="X";
+
+
+          let result=
+            winner(board);
+
+
+          if(result){
+
+            finish(result);
+            render();
+
+            return;
+
+          }
+
+
+          aiMove();
+
+
+          result=
+            winner(board);
+
+
+          if(result)
+            finish(result);
+
+
+          render();
+
+        };
+
+
+        grid.appendChild(
+          cell
+        );
+
+      }
+    );
+
+
+    const result=
+      winner(board);
+
+
+    if(!result&&!gameOver){
+
+      setStatus("Deine Runde");
+
+      setMessage(
+        "Du bist X • KI ist O"
+      );
+
+    }
+
+  }
+
+
+  function finish(result){
+
+    gameOver=true;
+
+
+    if(result==="X"){
+
+      setStatus(
+        "Gewonnen!"
+      );
+
+      setMessage(
+        "🎉 Du hast die KI besiegt!"
+      );
+
+      setScore(100);
+
+    }else if(
+      result==="O"
+    ){
+
+      setStatus(
+        "KI gewinnt"
+      );
+
+      setMessage(
+        "Die KI hat diese Runde gewonnen."
+      );
+
+      setScore(0);
+
+    }else{
+
+      setStatus(
+        "Unentschieden"
+      );
+
+      setMessage(
+        "🤝 Kein Platz mehr frei."
+      );
+
+    }
+
+  }
+
+
+  render();
+
+}
+
+
+/* =========================================================
+   🏓 PONG
+   ========================================================= */
+
+function startPong(){
+
+  const canvas=
+    createCanvas(
+      900,
+      560
+    );
+
+  const ctx=
+    canvas.getContext("2d");
+
+  addRestartButton();
+
+
+  let playerY=280;
+  let aiY=280;
+
+  let ball={
+
+    x:450,
+    y:280,
+
+    vx:5,
+    vy:3.2,
+
+    radius:10
+
+  };
+
+
+  let playerScore=0;
+  let aiScore=0;
+
+  let running=true;
+
+
+  function resetBall(
+    direction
+  ){
+
+    ball.x=450;
+    ball.y=280;
+
+    ball.vx=
+      5*
+      direction;
+
+    ball.vy=
+      rand(
+        -3.8,
+        3.8
+      );
+
+  }
+
+
+  canvas.addEventListener(
+    "pointermove",
+    event=>{
+
+      const p=
+        pointerPosition(
+          canvas,
+          event
+        );
+
+      playerY=
+        clamp(
+          p.y,
+          75,
+          485
+        );
+
+    }
+  );
+
+
+  window.onkeydown=
+    event=>{
+
+      if(
+        event.key==="ArrowUp"
+      )
+        playerY-=30;
+
+
+      if(
+        event.key==="ArrowDown"
+      )
+        playerY+=30;
+
+
+      playerY=
+        clamp(
+          playerY,
+          75,
+          485
+        );
+
+    };
+
+
+  function update(){
+
+    if(!running)
+      return;
+
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+
+    if(
+      ball.y-ball.radius<0
+      ||
+      ball.y+
+      ball.radius>560
+    ){
+
+      ball.vy*=-1;
+
+    }
+
+
+    /* AI */
+
+    const aiSpeed=
+      3.3+
+      Math.min(
+        2,
+        (playerScore+
+         aiScore)*.05
+      );
+
+
+    if(
+      aiY<ball.y
+    )
+      aiY+=aiSpeed;
+
+    if(
+      aiY>ball.y
+    )
+      aiY-=aiSpeed;
+
+
+    aiY=
+      clamp(
+        aiY,
+        75,
+        485
+      );
+
+
+    /* Spieler */
+
+    if(
+      ball.x<
+      72
+      &&
+      ball.x>
+      48
+      &&
+      Math.abs(
+        ball.y-playerY
+      )<
+      75
+      &&
+      ball.vx<0
+    ){
+
+      ball.vx=
+        Math.abs(ball.vx)*
+        1.04;
+
+      const hit=
+        (
+          ball.y-playerY
+        )/75;
+
+      ball.vy=
+        hit*5.5;
+
+      ball.x=74;
+
+    }
+
+
+    /* KI */
+
+    if(
+      ball.x>
+      828
+      &&
+      ball.x<
+      852
+      &&
+      Math.abs(
+        ball.y-aiY
+      )<
+      75
+      &&
+      ball.vx>0
+    ){
+
+      ball.vx=
+        -Math.abs(ball.vx)*
+        1.04;
+
+      const hit=
+        (
+          ball.y-aiY
+        )/75;
+
+      ball.vy=
+        hit*5.5;
+
+      ball.x=826;
+
+    }
+
+
+    if(
+      ball.x<0
+    ){
+
+      aiScore++;
+
+      resetBall(1);
+
+    }
+
+
+    if(
+      ball.x>900
+    ){
+
+      playerScore++;
+
+      resetBall(-1);
+
+    }
+
+
+    setScore(
+      playerScore
+    );
+
+    setLevel(
+      aiScore+1
+    );
+
+    setStatus(
+      playerScore+
+      " : "+
+      aiScore
+    );
+
+  }
+
+
+  function paddle(
+    x,
+    y
+  ){
+
+    const gradient=
+      ctx.createLinearGradient(
+        x,
+        y-75,
+        x+18,
+        y+75
+      );
+
+    gradient.addColorStop(
+      0,
+      "#9fe8ff"
+    );
+
+    gradient.addColorStop(
+      .5,
+      "#5b78ff"
+    );
+
+    gradient.addColorStop(
+      1,
+      "#3347bd"
+    );
+
+
+    ctx.fillStyle=
+      gradient;
+
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+      x,
+      y-75,
+      18,
+      150,
+      9
+    );
+
+    ctx.fill();
+
+  }
+
+
+  function draw(){
+
+    if(!running)
+      return;
+
+
+    update();
+
+
+    const bg=
+      ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        560
+      );
+
+    bg.addColorStop(
+      0,
+      "#0c1230"
+    );
+
+    bg.addColorStop(
+      1,
+      "#070a17"
+    );
+
+
+    ctx.fillStyle=bg;
+
+    ctx.fillRect(
+      0,
+      0,
+      900,
+      560
+    );
+
+
+    /* Mittellinie */
+
+    ctx.strokeStyle=
+      "#34406a";
+
+    ctx.setLineDash(
+      [8,14]
+    );
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      450,
+      0
+    );
+
+    ctx.lineTo(
+      450,
+      560
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+
+    paddle(
+      50,
+      playerY
+    );
+
+
+    paddle(
+      832,
+      aiY
+    );
+
+
+    const glow=
+      ctx.createRadialGradient(
+        ball.x,
+        ball.y,
+        1,
+        ball.x,
+        ball.y,
+        28
+      );
+
+    glow.addColorStop(
+      0,
+      "#ffffff"
+    );
+
+    glow.addColorStop(
+      .4,
+      "#69eaff"
+    );
+
+    glow.addColorStop(
+      1,
+      "#69eaff00"
+    );
+
+
+    ctx.fillStyle=glow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      28,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      ball.radius,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    animationFrame=
+      requestAnimationFrame(
+        draw
+      );
+
+  }
+
+
+  setMessage(
+    "Finger bewegen oder ↑ ↓ benutzen."
+  );
+
+
+  draw();
+
+}
+
+
+/* =========================================================
+   🐦 FLAPPY SKY
+   PROFESSIONELLER VOGEL
+   ========================================================= */
+
+function startFlappySky(){
+
+  const canvas=
+    createCanvas(
+      900,
+      560
+    );
+
+  const ctx=
+    canvas.getContext("2d");
+
+  addRestartButton();
+
+
+  let bird={
+    x:180,
+    y:280,
+
+    velocity:0,
+
+    width:44,
+    height:34,
+
+    wing:0
+  };
+
+
+  let pipes=[];
+
+  let points=0;
+  let speed=3.5;
+
+  let running=true;
+
+  let lastPipe=0;
+
+  let groundOffset=0;
+
+
+  let clouds=[
+    {
+      x:100,
+      y:90,
+      scale:1
+    },
+    {
+      x:510,
+      y:150,
+      scale:.8
+    },
+    {
+      x:770,
+      y:65,
+      scale:.7
+    }
+  ];
+
+
+  function flap(){
+
+    if(!running)
+      return;
+
+    bird.velocity=-8.3;
+
+  }
+
+
+  canvas.addEventListener(
+    "pointerdown",
+    event=>{
+      event.preventDefault();
+      flap();
+    }
+  );
+
+
+  window.onkeydown=
+    event=>{
+
+      if(
+        event.key===" "||
+        event.key==="ArrowUp"
+      ){
+
+        event.preventDefault();
+
+        flap();
+
+      }
+
+    };
+
+
+  function createPipe(){
+
+    const gapHeight=
+      Math.max(
+        145,
+        190-
+        points*1.4
+      );
+
+
+    const center=
+      rand(
+        145,
+        385
+      );
+
+
+    pipes.push({
+
+      x:930,
+
+      width:90,
+
+      gapTop:
+        center-
+        gapHeight/2,
+
+      gapBottom:
+        center+
+        gapHeight/2,
+
+      passed:false
+
+    });
+
+  }
+
+
+  function drawSky(){
+
+    const sky=
+      ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        560
+      );
+
+
+    sky.addColorStop(
+      0,
+      "#51c9f4"
+    );
+
+    sky.addColorStop(
+      .55,
+      "#91ddf3"
+    );
+
+    sky.addColorStop(
+      .82,
+      "#d1edc2"
+    );
+
+    sky.addColorStop(
+      1,
+      "#b7d47f"
+    );
+
+
+    ctx.fillStyle=sky;
+
+    ctx.fillRect(
+      0,
+      0,
+      900,
+      560
+    );
+
+
+    /* Sonne */
+
+    const sun=
+      ctx.createRadialGradient(
+        710,
+        85,
+        5,
+        710,
+        85,
+        75
+      );
+
+    sun.addColorStop(
+      0,
+      "#fffbd2"
+    );
+
+    sun.addColorStop(
+      .35,
+      "#ffe98a"
+    );
+
+    sun.addColorStop(
+      1,
+      "#fff0a000"
+    );
+
+
+    ctx.fillStyle=sun;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      710,
+      85,
+      75,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* Wolken */
+
+    clouds.forEach(
+      cloud=>{
+
+        cloud.x-=.35;
+
+
+        if(
+          cloud.x<
+          -120
+        )
+          cloud.x=
+            980;
+
+
+        ctx.save();
+
+        ctx.translate(
+          cloud.x,
+          cloud.y
+        );
+
+        ctx.scale(
+          cloud.scale,
+          cloud.scale
+        );
+
+
+        ctx.fillStyle=
+          "#ffffffcc";
+
+
+        const bubbles=[
+          [-50,8,27],
+          [-15,-5,36],
+          [24,7,29],
+          [55,11,20]
+        ];
+
+
+        bubbles.forEach(
+          item=>{
+
+            ctx.beginPath();
+
+            ctx.arc(
+              item[0],
+              item[1],
+              item[2],
+              0,
+              Math.PI*2
+            );
+
+            ctx.fill();
+
+          }
+        );
+
+
+        ctx.restore();
+
+      }
+    );
+
+  }
+
+
+  function drawPipe(pipe){
+
+    /*
+      Außen: sehr dunkles Grün
+      Innen: sattes, helleres Grün
+    */
+
+    const outer=
+      ctx.createLinearGradient(
+        pipe.x,
+        0,
+        pipe.x+
+        pipe.width,
+        0
+      );
+
+    outer.addColorStop(
+      0,
+      "#103b21"
+    );
+
+    outer.addColorStop(
+      .5,
+      "#0a2917"
+    );
+
+    outer.addColorStop(
+      1,
+      "#061b10"
+    );
+
+
+    const inner=
+      ctx.createLinearGradient(
+        pipe.x,
+        0,
+        pipe.x+
+        pipe.width,
+        0
+      );
+
+    inner.addColorStop(
+      0,
+      "#4eac50"
+    );
+
+    inner.addColorStop(
+      .22,
+      "#71ca63"
+    );
+
+    inner.addColorStop(
+      .5,
+      "#58b853"
+    );
+
+    inner.addColorStop(
+      1,
+      "#2b7838"
+    );
+
+
+    const capHeight=30;
+    const lip=10;
+
+
+    function verticalPipe(
+      y,
+      height
+    ){
+
+      if(height<=0)
+        return;
+
+
+      /* dunkler Außenkörper */
+
+      ctx.fillStyle=
+        outer;
+
+      ctx.fillRect(
+        pipe.x,
+        y,
+        pipe.width,
+        height
+      );
+
+
+      /* hellere Innenfläche */
+
+      ctx.fillStyle=
+        inner;
+
+      ctx.fillRect(
+        pipe.x+9,
+        y,
+        pipe.width-18,
+        height
+      );
+
+
+      /* Glanz */
+
+      ctx.fillStyle=
+        "#a4e99a66";
+
+      ctx.fillRect(
+        pipe.x+14,
+        y,
+        7,
+        height
+      );
+
+
+      /* rechter Schatten */
+
+      ctx.fillStyle=
+        "#06301755";
+
+      ctx.fillRect(
+        pipe.x+
+        pipe.width-
+        13,
+        y,
+        5,
+        height
+      );
+
+    }
+
+
+    verticalPipe(
+      0,
+      pipe.gapTop-capHeight
+    );
+
+
+    verticalPipe(
+      pipe.gapBottom+
+      capHeight,
+      470-
+      pipe.gapBottom
+    );
+
+
+    /* Rohr-Kappen */
+
+    function pipeCap(
+      y
+    ){
+
+      ctx.fillStyle=
+        outer;
+
+      ctx.beginPath();
+
+      ctx.roundRect(
+        pipe.x-lip,
+        y,
+        pipe.width+
+        lip*2,
+        capHeight,
+        8
+      );
+
+      ctx.fill();
+
+
+      ctx.fillStyle=
+        inner;
+
+      ctx.beginPath();
+
+      ctx.roundRect(
+        pipe.x-lip+8,
+        y+5,
+        pipe.width+
+        lip*2-16,
+        capHeight-10,
+        5
+      );
+
+      ctx.fill();
+
+
+      ctx.fillStyle=
+        "#b2eda766";
+
+      ctx.fillRect(
+        pipe.x+3,
+        y+6,
+        7,
+        capHeight-12
+      );
+
+    }
+
+
+    pipeCap(
+      pipe.gapTop-
+      capHeight
+    );
+
+
+    pipeCap(
+      pipe.gapBottom
+    );
+
+  }
+
+
+  function drawBird(){
+
+    ctx.save();
+
+    ctx.translate(
+      bird.x,
+      bird.y
+    );
+
+
+    const rotation=
+      clamp(
+        bird.velocity/
+        12,
+        -.35,
+        .75
+      );
+
+    ctx.rotate(
+      rotation
+    );
+
+
+    /* Schwanzfedern */
+
+    ctx.fillStyle=
+      "#e5a823";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -23,
+      6
+    );
+
+    ctx.lineTo(
+      -38,
+      -1
+    );
+
+    ctx.lineTo(
+      -31,
+      12
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* Körper */
+
+    const body=
+      ctx.createRadialGradient(
+        -5,
+        -6,
+        2,
+        0,
+        0,
+        28
+      );
+
+    body.addColorStop(
+      0,
+      "#ffe87d"
+    );
+
+    body.addColorStop(
+      .55,
+      "#f8c73b"
+    );
+
+    body.addColorStop(
+      1,
+      "#d88d1b"
+    );
+
+
+    ctx.fillStyle=body;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      25,
+      19,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* Bauch */
+
+    ctx.fillStyle=
+      "#ffe6a2";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      6,
+      7,
+      14,
+      10,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* Flügel */
+
+    const wingY=
+      Math.sin(
+        bird.wing
+      )*4;
+
+
+    ctx.save();
+
+    ctx.translate(
+      -5,
+      wingY
+    );
+
+
+    ctx.rotate(
+      -.45
+    );
+
+
+    ctx.fillStyle=
+      "#dc9a24";
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      -5,
+      7,
+      17,
+      7,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+
+    /* Auge */
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      10,
+      -8,
+      7,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#101820";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      12,
+      -8,
+      3,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* Schnabel */
+
+    ctx.fillStyle=
+      "#ec7421";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      23,
+      -1
+    );
+
+    ctx.lineTo(
+      39,
+      5
+    );
+
+    ctx.lineTo(
+      23,
+      10
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* kleiner roter Schnabelrand */
+
+    ctx.strokeStyle=
+      "#a83d14";
+
+    ctx.lineWidth=2;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      24,
+      5
+    );
+
+    ctx.lineTo(
+      37,
+      5
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+
+
+    bird.wing+=.22;
+
+  }
+
+
+  function drawGround(){
+
+    groundOffset=
+      (groundOffset+
+       speed)%45;
+
+
+    /* Gras */
+
+    ctx.fillStyle=
+      "#78b64d";
+
+    ctx.fillRect(
+      0,
+      470,
+      900,
+      20
+    );
+
+
+    /* Erde */
+
+    const soil=
+      ctx.createLinearGradient(
+        0,
+        490,
+        0,
+        560
+      );
+
+    soil.addColorStop(
+      0,
+      "#9a7442"
+    );
+
+    soil.addColorStop(
+      1,
+      "#654422"
+    );
+
+    ctx.fillStyle=soil;
+
+    ctx.fillRect(
+      0,
+      490,
+      900,
+      70
+    );
+
+
+    /* Grasstreifen */
+
+    ctx.fillStyle=
+      "#9bd25b";
+
+
+    for(
+      let x=-45;
+      x<945;
+      x+=45
+    ){
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        x-groundOffset,
+        470
+      );
+
+      ctx.lineTo(
+        x+13-groundOffset,
+        458
+      );
+
+      ctx.lineTo(
+        x+20-groundOffset,
+        470
+      );
+
+      ctx.closePath();
+
+      ctx.fill();
+
+    }
+
+
+    /* Bodenpunkte */
+
+    ctx.fillStyle=
+      "#7f5a32";
+
+
+    for(
+      let x=0;
+      x<900;
+      x+=34
+    ){
+
+      ctx.fillRect(
+        x+
+        ((x*7)%11),
+        515+
+        ((x*3)%25),
+        8,
+        4
+      );
+
+    }
+
+  }
+
+
+  function collision(){
+
+    const left=
+      bird.x-
+      bird.width/2;
+
+    const right=
+      bird.x+
+      bird.width/2;
+
+    const top=
+      bird.y-
+      bird.height/2;
+
+    const bottom=
+      bird.y+
+      bird.height/2;
+
+
+    if(
+      top<0 ||
+      bottom>470
+    )
+      return true;
+
+
+    for(
+      const pipe
+      of pipes
+    ){
+
+      const pipeLeft=
+        pipe.x;
+
+      const pipeRight=
+        pipe.x+
+        pipe.width;
+
+
+      if(
+        right>pipeLeft &&
+        left<pipeRight
+      ){
+
+        if(
+          top<
+          pipe.gapTop ||
+          bottom>
+          pipe.gapBottom
+        ){
+
+          return true;
+
+        }
+
+      }
+
+    }
+
+
+    return false;
+
+  }
+
+
+  function gameLoop(time){
+
+    if(!running)
+      return;
+
+
+    bird.velocity+=.42;
+
+    bird.y+=
+      bird.velocity;
+
+
+    if(
+      time-lastPipe>
+      1550
+    ){
+
+      createPipe();
+
+      lastPipe=time;
+
+    }
+
+
+    pipes.forEach(
+      pipe=>{
+
+        pipe.x-=speed;
+
+
+        if(
+          !pipe.passed &&
+          pipe.x+
+          pipe.width<
+          bird.x
+        ){
+
+          pipe.passed=true;
+
+          points++;
+
+          setScore(points);
+
+
+          if(
+            points%5===0
+          ){
+
+            speed=
+              Math.min(
+                6.5,
+                speed+.22
+              );
+
+            setLevel(
+              Math.floor(
+                points/5
+              )+1
+            );
+
+          }
+
+        }
+
+      }
+    );
+
+
+    pipes=
+      pipes.filter(
+        pipe=>pipe.x>-120
+      );
+
+
+    if(
+      collision()
+    ){
+
+      running=false;
+
+      setStatus(
+        "Game Over"
+      );
+
+      setMessage(
+        "🐦 Der Vogel ist gegen ein Hindernis geflogen."
+      );
+
+    }
+
+
+    drawSky();
+
+
+    pipes.forEach(
+      drawPipe
+    );
+
+
+    drawGround();
+
+
+    drawBird();
+
+
+    setScore(points);
+
+
+    animationFrame=
+      requestAnimationFrame(
+        gameLoop
+      );
+
+  }
+
+
+  setMessage(
+    "Tippen oder Leertaste = Flügelschlag"
+  );
+
+  gameLoop(0);
+
+}
+
+
+/* =========================================================
+   💡 LIGHTS OUT
+   ========================================================= */
+
+function startLightsOut(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const grid=
+    document.createElement("div");
+
+  grid.className=
+    "cardsGrid";
+
+
+  grid.style.gridTemplateColumns=
+    "repeat(5,1fr)";
+
+
+  gameArea.appendChild(
+    grid
+  );
+
+
+  let cells=
+    Array(25)
+    .fill(false);
+
+
+  /* Zufälliges Startmuster */
+
+  for(let i=0;i<25;i++){
+
+    cells[i]=
+      Math.random()<.38;
+
+  }
+
+
+  let moves=0;
+
+
+  function toggle(index){
+
+    const row=
+      Math.floor(index/5);
+
+    const col=
+      index%5;
+
+
+    const positions=[
+      [row,col],
+      [row-1,col],
+      [row+1,col],
+      [row,col-1],
+      [row,col+1]
+    ];
+
+
+    positions.forEach(
+      ([r,c])=>{
+
+        if(
+          r<0||
+          r>=5||
+          c<0||
+          c>=5
+        )
+          return;
+
+
+        cells[
+          r*5+c
+        ]=
+          !cells[
+            r*5+c
+          ];
+
+      }
+    );
+
+
+    moves++;
+
+  }
+
+
+  function draw(){
+
+    grid.innerHTML="";
+
+
+    cells.forEach(
+      (on,index)=>{
+
+        const button=
+          document.createElement("button");
+
+        button.className=
+          "gameCard";
+
+
+        button.style.aspectRatio=
+          "1";
+
+
+        button.style.minHeight="0";
+
+
+        button.textContent=
+          on
+          ?"💡"
+          :"·";
+
+
+        button.style.background=
+          on
+          ?"linear-gradient(145deg,#f6d557,#9d6e12)"
+          :"linear-gradient(145deg,#151b31,#0b1020)";
+
+
+        button.onclick=()=>{
+
+          toggle(index);
+
+          setScore(
+            moves
+          );
+
+
+          if(
+            cells.every(
+              value=>!value
+            )
+          ){
+
+            setStatus(
+              "Gewonnen!"
+            );
+
+            setMessage(
+              "💡 Alle Lichter sind aus!"
+            );
+
+          }
+
+
+          draw();
+
+        };
+
+
+        grid.appendChild(
+          button
+        );
+
+      }
+    );
+
+
+    setScore(moves);
+
+  }
+
+
+  draw();
+
+  setMessage(
+    "Schalte alle 25 Lichter aus."
+  );
+
+}
+
+
+/* =========================================================
+   🎨 COLOR MATCH
+   ========================================================= */
+
+function startColorMatch(){
+
+  gameArea.innerHTML="";
+
+  addRestartButton();
+
+
+  const title=
+    document.createElement("div");
+
+  title.className=
+    "bigNumber";
+
+  gameArea.appendChild(
+    title
+  );
+
+
+  const buttons=
+    document.createElement("div");
+
+  buttons.className=
+    "choiceRow";
+
+  gameArea.appendChild(
+    buttons
+  );
+
+
+  const colors=[
+
+    {
+      name:"ROT",
+      color:"#ef476f"
+    },
+
+    {
+      name:"BLAU",
+      color:"#4778ff"
+    },
+
+    {
+      name:"GRÜN",
+      color:"#35c97f"
+    },
+
+    {
+      name:"GELB",
+      color:"#f7c843"
+    },
+
+    {
+      name:"LILA",
+      color:"#9a63ff"
+    },
+
+    {
+      name:"ORANGE",
+      color:"#ff8c42"
+    }
+
+  ];
+
+
+  let target;
+  let points=0;
+  let round=0;
+
+
+  function next(){
+
+    round++;
+
+    target=
+      colors[
+        randInt(
+          0,
+          colors.length-1
+        )
+      ];
+
+
+    /*
+      Das Wort und die
+      dargestellte Farbe sind
+      absichtlich unterschiedlich.
+    */
+
+    const displayColor=
+      colors[
+        randInt(
+          0,
+          colors.length-1
+        )
+      ];
+
+
+    title.textContent=
+      target.name;
+
+
+    title.style.color=
+      displayColor.color;
+
+
+    setScore(points);
+
+
+    setLevel(
+      Math.floor(
+        round/10
+      )+1
+    );
+
+  }
+
+
+  colors.forEach(
+    color=>{
+
+      const button=
+        document.createElement("button");
+
+      button.className=
+        "gameButton";
+
+
+      button.textContent=
+        color.name;
+
+
+      button.style.background=
+        color.color;
+
+
+      button.style.color=
+        "#081018";
+
+
+      button.onclick=()=>{
+
+        if(
+          color.name===
+          target.name
+        ){
+
+          points++;
+
+          setMessage(
+            "✅ Richtig!"
+          );
+
+        }else{
+
+          points=
+            Math.max(
+              0,
+              points-1
+            );
+
+          setMessage(
+            "❌ Falsch!"
+          );
+
+        }
+
+
+        next();
+
+      };
+
+
+      buttons.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  next();
+
+}
+
+
+/* =========================================================
+   TEIL 2 ENDE
+   ========================================================= */
+  <!-- GAMEGALAXY TEIL 3 PROFESSIONELLE SPIELE -->
+
+function startWhackSpot(){
+  const {canvas,ctx}=createCanvas();
+  let score=0,time=30,target=null,running=true;
+
+  function newTarget(){
+    target={
+      x:randInt(50,canvas.width-50),
+      y:randInt(50,canvas.height-50),
+      r:randInt(22,38)
+    };
+  }
+
+  newTarget();
+  setScore(0);
+  setLevel("30s");
+  setStatus("Tippe so schnell wie möglich auf den Punkt");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+    const d=Math.hypot(p.x-target.x,p.y-target.y);
+    if(d<=target.r){
+      score++;
+      setScore(score);
+      newTarget();
+    }
+  };
+
+  const start=performance.now();
+  function loop(now){
+    if(!running)return;
+
+    time=30-(now-start)/1000;
+    setLevel(Math.max(0,time).toFixed(1)+"s");
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const g=ctx.createRadialGradient(
+      target.x-target.r*.3,target.y-target.r*.3,2,
+      target.x,target.y,target.r
+    );
+    g.addColorStop(0,"#fff");
+    g.addColorStop(.25,"#ff4d8d");
+    g.addColorStop(1,"#7c1cff");
+
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.arc(target.x,target.y,target.r,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle="rgba(255,255,255,.8)";
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.arc(target.x,target.y,target.r+6,0,Math.PI*2);
+    ctx.stroke();
+
+    if(time<=0){
+      running=false;
+      setStatus("Zeit vorbei");
+      setMessage("Treffer: "+score);
+      addRestartButton(startWhackSpot);
+      return;
+    }
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startConnect4(){
+  const {canvas,ctx}=createCanvas();
+  const COLS=7,ROWS=6;
+  const cell=Math.min(canvas.width/(COLS+.4),canvas.height/(ROWS+.8));
+  const ox=(canvas.width-cell*COLS)/2;
+  const oy=30;
+  let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+  let gameOver=false;
+
+  setScore(0);
+  setLevel("Spieler");
+  setStatus("Du bist 🔴 • Vier in einer Reihe");
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#1646a0";
+    ctx.beginPath();
+    ctx.roundRect(ox-12,oy-12,cell*COLS+24,cell*ROWS+24,24);
+    ctx.fill();
+
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const x=ox+c*cell+cell/2;
+        const y=oy+r*cell+cell/2;
+        ctx.beginPath();
+        ctx.arc(x,y,cell*.36,0,Math.PI*2);
+
+        if(board[r][c]===1)ctx.fillStyle="#e92b38";
+        else if(board[r][c]===2)ctx.fillStyle="#ffd22e";
+        else ctx.fillStyle="rgba(8,22,52,.95)";
+
+        ctx.fill();
+
+        if(board[r][c]){
+          ctx.strokeStyle="rgba(255,255,255,.3)";
+          ctx.lineWidth=3;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function winner(p){
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        if(board[r][c]!==p)continue;
+
+        const dirs=[[1,0],[0,1],[1,1],[1,-1]];
+        for(const [dr,dc] of dirs){
+          let n=1;
+          for(let k=1;k<4;k++){
+            const rr=r+dr*k,cc=c+dc*k;
+            if(rr<0||rr>=ROWS||cc<0||cc>=COLS||board[rr][cc]!==p)break;
+            n++;
+          }
+          if(n>=4)return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function full(){
+    return board[0].every(Boolean);
+  }
+
+  function drop(col,p){
+    for(let r=ROWS-1;r>=0;r--){
+      if(!board[r][col]){
+        board[r][col]=p;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function aiMove(){
+    let best=-1;
+
+    for(let c=0;c<COLS;c++){
+      const copy=board.map(row=>row.slice());
+      if(!drop(c,2))continue;
+      if(winner(2)){
+        best=c;
+        board=copy;
+        break;
+      }
+      board=copy;
+    }
+
+    if(best<0){
+      for(let c=0;c<COLS;c++){
+        const copy=board.map(row=>row.slice());
+        if(!drop(c,1))continue;
+        if(winner(1)){
+          best=c;
+          board=copy;
+          break;
+        }
+        board=copy;
+      }
+    }
+
+    if(best<0){
+      const order=[3,2,4,1,5,0,6];
+      for(const c of order){
+        if(!board[0][c]){
+          best=c;
+          break;
+        }
+      }
+    }
+
+    if(best>=0)drop(best,2);
+  }
+
+  canvas.onpointerdown=e=>{
+    if(gameOver)return;
+
+    const p=pointerPosition(canvas,e);
+    const col=Math.floor((p.x-ox)/cell);
+
+    if(col<0||col>=COLS)return;
+    if(!drop(col,1))return;
+
+    draw();
+
+    if(winner(1)){
+      gameOver=true;
+      setScore(1);
+      setStatus("Du hast gewonnen 🎉");
+      addRestartButton(startConnect4);
+      return;
+    }
+
+    if(full()){
+      gameOver=true;
+      setStatus("Unentschieden");
+      addRestartButton(startConnect4);
+      return;
+    }
+
+    aiMove();
+
+    if(winner(2)){
+      gameOver=true;
+      setStatus("Computer gewinnt");
+      addRestartButton(startConnect4);
+      draw();
+      return;
+    }
+
+    if(full()){
+      gameOver=true;
+      setStatus("Unentschieden");
+      addRestartButton(startConnect4);
+      return;
+    }
+
+    setStatus("Du bist 🔴");
+    draw();
+  };
+
+  draw();
+}
+
+
+function startSimon(){
+  const colors=[
+    {name:"green",color:"#31d158"},
+    {name:"red",color:"#ff453a"},
+    {name:"blue",color:"#0a84ff"},
+    {name:"yellow",color:"#ffd60a"}
+  ];
+
+  let sequence=[];
+  let userIndex=0;
+  let accepting=false;
+  let score=0;
+
+  gameArea.innerHTML=`
+    <div class="bigNumber" id="simonRound">Runde 1</div>
+    <div id="simonBoard" style="
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      max-width:420px;
+      margin:20px auto;
+    ">
+      ${colors.map((c,i)=>`
+        <button data-i="${i}" style="
+          height:170px;
+          border:none;
+          border-radius:28px;
+          background:${c.color};
+          opacity:.72;
+          box-shadow:inset 0 0 0 4px rgba(255,255,255,.12),0 12px 30px rgba(0,0,0,.22);
+        "></button>
+      `).join("")}
+    </div>
+  `;
+
+  const buttons=[...document.querySelectorAll("#simonBoard button")];
+
+  function flash(i){
+    const b=buttons[i];
+    b.style.opacity="1";
+    b.style.transform="scale(.96)";
+    setTimeout(()=>{
+      b.style.opacity=".72";
+      b.style.transform="scale(1)";
+    },300);
+  }
+
+  function nextRound(){
+    accepting=false;
+    userIndex=0;
+    sequence.push(randInt(0,3));
+
+    document.getElementById("simonRound").textContent="Runde "+sequence.length;
+    setStatus("Merken...");
+
+    sequence.forEach((v,i)=>{
+      setTimeout(()=>flash(v),550+i*500);
+    });
+
+    setTimeout(()=>{
+      accepting=true;
+      setStatus("Jetzt wiederholen");
+    },550+sequence.length*500);
+  }
+
+  buttons.forEach(b=>{
+    b.addEventListener("pointerdown",()=>{
+      if(!accepting)return;
+
+      const i=Number(b.dataset.i);
+      flash(i);
+
+      if(i!==sequence[userIndex]){
+        accepting=false;
+        setStatus("Falsch!");
+        setMessage("Geschafft: Runde "+sequence.length);
+        addRestartButton(startSimon);
+        return;
+      }
+
+      userIndex++;
+      score++;
+      setScore(score);
+
+      if(userIndex===sequence.length){
+        accepting=false;
+        setTimeout(nextRound,700);
+      }
+    });
+  });
+
+  setScore(0);
+  nextRound();
+}
+
+
+function startHigherLower(){
+  let current=randInt(1,100);
+  let score=0;
+  let streak=0;
+
+  gameArea.innerHTML=`
+    <div class="bigNumber" id="hlNumber">${current}</div>
+    <div class="choiceRow">
+      <button class="gameButton" id="lowerBtn">⬇️ Niedriger</button>
+      <button class="gameButton" id="higherBtn">⬆️ Höher</button>
+    </div>
+    <div id="hlNext" style="margin-top:18px;font-size:20px;opacity:.8">
+      Errate die nächste Zahl
+    </div>
+  `;
+
+  const numberEl=document.getElementById("hlNumber");
+
+  function guess(direction){
+    const next=randInt(1,100);
+    const good=direction==="higher"?next>current:next<current;
+
+    if(next===current){
+      setStatus("Gleich!");
+      return;
+    }
+
+    if(!good){
+      setStatus("Falsch");
+      setMessage("Punkte: "+score);
+      addRestartButton(startHigherLower);
+      return;
+    }
+
+    score++;
+    streak++;
+    setScore(score);
+
+    current=next;
+    numberEl.textContent=current;
+    setLevel("Streak "+streak);
+    setStatus("Richtig 🔥");
+  }
+
+  document.getElementById("lowerBtn").onclick=()=>guess("lower");
+  document.getElementById("higherBtn").onclick=()=>guess("higher");
+  setScore(0);
+  setStatus("Bereit");
+}
+
+
+function startQuickMath(){
+  let score=0;
+  let question=0;
+
+  gameArea.innerHTML=`
+    <div class="bigNumber" id="mathQuestion"></div>
+    <div style="max-width:520px;margin:auto">
+      <input id="mathInput" inputmode="numeric" type="number"
+        placeholder="Antwort"
+        style="
+          width:100%;
+          font-size:28px;
+          padding:16px;
+          border-radius:16px;
+          border:1px solid rgba(255,255,255,.15);
+          background:#101522;
+          color:white;
+          text-align:center;
+        ">
+      <button class="gameButton" id="mathSubmit" style="margin-top:14px;width:100%">
+        Prüfen
+      </button>
+    </div>
+  `;
+
+  const qEl=document.getElementById("mathQuestion");
+  const input=document.getElementById("mathInput");
+
+  function newQuestion(){
+    question++;
+    const type=randInt(0,3);
+    let a,b,ans,text;
+
+    if(type===0){
+      a=randInt(5,50); b=randInt(5,50);
+      ans=a+b; text=`${a} + ${b}`;
+    }else if(type===1){
+      a=randInt(20,80); b=randInt(5,a);
+      ans=a-b; text=`${a} − ${b}`;
+    }else if(type===2){
+      a=randInt(2,12); b=randInt(2,12);
+      ans=a*b; text=`${a} × ${b}`;
+    }else{
+      b=randInt(2,12);
+      ans=randInt(2,12);
+      a=b*ans;
+      text=`${a} ÷ ${b}`;
+    }
+
+    qEl.textContent=text;
+    qEl.dataset.answer=ans;
+    input.value="";
+    input.focus();
+  }
+
+  function submit(){
+    if(Number(input.value)===Number(qEl.dataset.answer)){
+      score++;
+      setScore(score);
+      setStatus("Richtig ✅");
+      newQuestion();
+    }else{
+      setStatus("Falsch");
+      setMessage("Punkte: "+score);
+      addRestartButton(startQuickMath);
+    }
+  }
+
+  document.getElementById("mathSubmit").onclick=submit;
+  input.onkeydown=e=>{
+    if(e.key==="Enter")submit();
+  };
+
+  setScore(0);
+  newQuestion();
+}
+
+
+function startCoinCatch(){
+  const {canvas,ctx}=createCanvas();
+  let basket={x:canvas.width/2,w:100,h:28,y:canvas.height-45};
+  let coins=[];
+  let score=0;
+  let lives=3;
+  let last=performance.now();
+
+  setScore(0);
+  setLevel("❤️❤️❤️");
+  setStatus("Bewege den Korb");
+
+  canvas.onpointermove=e=>{
+    const p=pointerPosition(canvas,e);
+    basket.x=clamp(p.x,basket.w/2,canvas.width-basket.w/2);
+  };
+
+  canvas.onpointerdown=canvas.onpointermove;
+
+  function spawn(){
+    coins.push({
+      x:randInt(20,canvas.width-20),
+      y:-20,
+      r:12,
+      speed:rand(170,260)
+    });
+  }
+
+  function loop(now){
+    const dt=Math.min(.03,(now-last)/1000);
+    last=now;
+
+    if(Math.random()<.035)spawn();
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#101827";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#ffd60a";
+    ctx.font="bold 18px system-ui";
+    ctx.fillText("Münzen fangen",20,28);
+
+    ctx.fillStyle="#0a84ff";
+    ctx.beginPath();
+    ctx.roundRect(
+      basket.x-basket.w/2,
+      basket.y,
+      basket.w,
+      basket.h,
+      12
+    );
+    ctx.fill();
+
+    for(let i=coins.length-1;i>=0;i--){
+      const c=coins[i];
+      c.y+=c.speed*dt;
+
+      const catchIt=
+        c.y+c.r>=basket.y &&
+        c.y-c.r<=basket.y+basket.h &&
+        c.x>=basket.x-basket.w/2 &&
+        c.x<=basket.x+basket.w/2;
+
+      if(catchIt){
+        score++;
+        setScore(score);
+        coins.splice(i,1);
+        continue;
+      }
+
+      if(c.y>canvas.height+30){
+        lives--;
+        setLevel("❤️".repeat(lives)+"🖤".repeat(3-lives));
+        coins.splice(i,1);
+
+        if(lives<=0){
+          setStatus("Game Over");
+          setMessage("Münzen: "+score);
+          addRestartButton(startCoinCatch);
+          return;
+        }
+        continue;
+      }
+
+      ctx.fillStyle="#ffd60a";
+      ctx.beginPath();
+      ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.strokeStyle="#fff3a3";
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startSafeTiles(){
+  const size=5;
+  let safe=new Set();
+  let score=0;
+  let round=0;
+  let locked=false;
+
+  function build(){
+    round++;
+    locked=true;
+    safe=new Set();
+
+    while(safe.size<randInt(5,8)){
+      safe.add(randInt(0,size*size-1));
+    }
+
+    gameArea.innerHTML=`
+      <div class="bigNumber">Runde ${round}</div>
+      <div id="safeGrid" style="
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        gap:8px;
+        max-width:430px;
+        margin:20px auto;
+      ">
+        ${Array.from({length:25},(_,i)=>`
+          <button data-i="${i}" style="
+            aspect-ratio:1;
+            border-radius:14px;
+            border:1px solid rgba(255,255,255,.1);
+            background:#151c2b;
+          "></button>
+        `).join("")}
+      </div>
+    `;
+
+    const buttons=[...document.querySelectorAll("#safeGrid button")];
+
+    setStatus("Merke dir die sicheren Felder");
+
+    safe.forEach(i=>{
+      buttons[i].style.background="#32d74b";
+      buttons[i].style.boxShadow="0 0 20px rgba(50,215,75,.45)";
+    });
+
+    setTimeout(()=>{
+      buttons.forEach(b=>{
+        b.style.background="#151c2b";
+        b.style.boxShadow="none";
+      });
+      locked=false;
+      setStatus("Welche Felder waren sicher?");
+    },1400);
+
+    buttons.forEach(b=>{
+      b.onclick=()=>{
+        if(locked)return;
+
+        const i=Number(b.dataset.i);
+
+        if(safe.has(i)){
+          score++;
+          setScore(score);
+          b.style.background="#32d74b";
+
+          if(score%5===0){
+            setLevel("Streak "+score);
+          }
+        }else{
+          b.style.background="#ff453a";
+          locked=true;
+          setStatus("Falsches Feld");
+          setMessage("Punkte: "+score);
+          addRestartButton(startSafeTiles);
+        }
+      };
+    });
+  }
+
+  setScore(0);
+  setLevel("Merken");
+  build();
+}
+
+
+function startConnectDots(){
+  const {canvas,ctx}=createCanvas();
+  let dots=[];
+  let next=1;
+  let start=performance.now();
+
+  for(let i=1;i<=20;i++){
+    let p;
+    let tries=0;
+    do{
+      p={
+        x:randInt(35,canvas.width-35),
+        y:randInt(55,canvas.height-35)
+      };
+      tries++;
+    }while(dots.some(d=>Math.hypot(d.x-p.x,d.y-p.y)<45)&&tries<100);
+
+    dots.push({...p,n:i});
+  }
+
+  setScore(0);
+  setStatus("Verbinde 1 → 20");
+  setLevel("0.0s");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+
+    const d=dots.find(d=>Math.hypot(d.x-p.x,d.y-p.y)<22);
+
+    if(!d||d.n!==next){
+      setStatus("Falsche Reihenfolge");
+      return;
+    }
+
+    d.hit=true;
+    next++;
+    setScore(next-1);
+
+    if(next>20){
+      const t=(performance.now()-start)/1000;
+      setStatus("Geschafft 🎉");
+      setMessage("Zeit: "+t.toFixed(2)+" Sekunden");
+      addRestartButton(startConnectDots);
+    }
+  };
+
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    for(const d of dots){
+      ctx.beginPath();
+      ctx.arc(d.x,d.y,22,0,Math.PI*2);
+      ctx.fillStyle=d.hit?"#32d74b":"#5e5ce6";
+      ctx.fill();
+
+      ctx.fillStyle="#fff";
+      ctx.font="bold 15px system-ui";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      ctx.fillText(d.n,d.x,d.y);
+    }
+
+    const elapsed=(performance.now()-start)/1000;
+    setLevel(elapsed.toFixed(1)+"s");
+
+    if(next<=20)animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startGuessNumber(){
+  let secret=randInt(1,100);
+  let attempts=0;
+
+  gameArea.innerHTML=`
+    <div class="bigNumber">1–100</div>
+    <input id="guessInput" type="number" inputmode="numeric"
+      placeholder="Deine Zahl"
+      style="
+        width:100%;
+        max-width:360px;
+        display:block;
+        margin:15px auto;
+        padding:16px;
+        font-size:25px;
+        text-align:center;
+        border-radius:15px;
+        border:1px solid rgba(255,255,255,.12);
+        background:#111827;
+        color:white;
+      ">
+    <button id="guessBtn" class="gameButton">Raten</button>
+  `;
+
+  const input=document.getElementById("guessInput");
+  const btn=document.getElementById("guessBtn");
+
+  function guess(){
+    const n=Number(input.value);
+    if(!n)return;
+
+    attempts++;
+    setScore(attempts);
+
+    if(n===secret){
+      setStatus("Richtig 🎉");
+      setMessage("Du hast "+attempts+" Versuche gebraucht.");
+      addRestartButton(startGuessNumber);
+      return;
+    }
+
+    setStatus(n<secret?"Zu niedrig ⬆️":"Zu hoch ⬇️");
+    input.select();
+  }
+
+  btn.onclick=guess;
+  input.onkeydown=e=>{
+    if(e.key==="Enter")guess();
+  };
+
+  setScore(0);
+  input.focus();
+}
+
+
+function startDiceDuel(){
+  let player=0;
+  let cpu=0;
+  let round=0;
+
+  gameArea.innerHTML=`
+    <div style="
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+      max-width:500px;
+      margin:auto;
+    ">
+      <div style="padding:24px;border-radius:22px;background:#151c2b">
+        <div>DU</div>
+        <div class="bigNumber" id="playerDice">🎲</div>
+        <div id="playerScore">0</div>
+      </div>
+      <div style="padding:24px;border-radius:22px;background:#151c2b">
+        <div>CPU</div>
+        <div class="bigNumber" id="cpuDice">🎲</div>
+        <div id="cpuScore">0</div>
+      </div>
+    </div>
+    <button id="rollDice" class="gameButton" style="margin-top:20px">
+      Würfeln
+    </button>
+  `;
+
+  const pd=document.getElementById("playerDice");
+  const cd=document.getElementById("cpuDice");
+
+  document.getElementById("rollDice").onclick=()=>{
+    if(round>=10)return;
+
+    round++;
+
+    const a=randInt(1,6);
+    const b=randInt(1,6);
+
+    pd.textContent=["","⚀","⚁","⚂","⚃","⚄","⚅"][a];
+    cd.textContent=["","⚀","⚁","⚂","⚃","⚄","⚅"][b];
+
+    if(a>b)player++;
+    if(b>a)cpu++;
+
+    document.getElementById("playerScore").textContent=player;
+    document.getElementById("cpuScore").textContent=cpu;
+
+    setScore(player);
+    setLevel("Runde "+round+"/10");
+
+    if(round===10){
+      document.getElementById("rollDice").disabled=true;
+      setStatus("10 Runden vorbei");
+      setMessage(`Du: ${player} • CPU: ${cpu}`);
+      addRestartButton(startDiceDuel);
+    }
+  };
+
+  setScore(0);
+}
+
+
+function startOddOneOut(){
+  let score=0;
+  let round=0;
+
+  function next(){
+    round++;
+
+    const size=Math.min(36,9+round*3);
+    const odd=randInt(0,size-1);
+    const base=randInt(0,5);
+
+    const styles=[
+      ["◆","◇"],
+      ["●","○"],
+      ["▲","△"],
+      ["■","□"],
+      ["★","☆"],
+      ["✦","✧"]
+    ];
+
+    const [normal,oddChar]=styles[base];
+
+    gameArea.innerHTML=`
+      <div class="bigNumber">Finde den Außenseiter</div>
+      <div id="oddGrid" style="
+        display:grid;
+        grid-template-columns:repeat(6,1fr);
+        gap:8px;
+        max-width:480px;
+        margin:18px auto;
+      ">
+        ${Array.from({length:size},(_,i)=>`
+          <button data-i="${i}" style="
+            min-height:58px;
+            border-radius:14px;
+            border:1px solid rgba(255,255,255,.1);
+            background:#151c2b;
+            color:white;
+            font-size:25px;
+          ">${i===odd?oddChar:normal}</button>
+        `).join("")}
+      </div>
+    `;
+
+    const buttons=[...document.querySelectorAll("#oddGrid button")];
+
+    setLevel("Runde "+round);
+
+    buttons.forEach((b,i)=>{
+      b.onclick=()=>{
+        if(i===odd){
+          score++;
+          setScore(score);
+          setStatus("Richtig ✅");
+          next();
+        }else{
+          setStatus("Falsch");
+          setMessage("Punkte: "+score);
+          addRestartButton(startOddOneOut);
+        }
+      };
+    });
+  }
+
+  setScore(0);
+  next();
+}
+
+
+function startNumberSprint(){
+  const {canvas,ctx}=createCanvas();
+  const count=25;
+  const numbers=Array.from({length:count},(_,i)=>i+1)
+    .sort(()=>Math.random()-.5);
+
+  let next=1;
+  let start=performance.now();
+  let dots=[];
+
+  for(const n of numbers){
+    dots.push({
+      n,
+      x:randInt(45,canvas.width-45),
+      y:randInt(55,canvas.height-45),
+      r:26
+    });
+  }
+
+  setScore(0);
+  setStatus("Tippe 1 bis 25");
+  setLevel("0.0s");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+    const d=dots.find(d=>d.n===next);
+
+    if(d&&Math.hypot(d.x-p.x,d.y-p.y)<d.r){
+      d.done=true;
+      next++;
+      setScore(next-1);
+
+      if(next>count){
+        const t=(performance.now()-start)/1000;
+        setStatus("Geschafft 🎉");
+        setMessage(t.toFixed(2)+" Sekunden");
+        addRestartButton(startNumberSprint);
+      }
+    }
+  };
+
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    for(const d of dots){
+      ctx.beginPath();
+      ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+      ctx.fillStyle=d.done?"#32d74b":"#212b42";
+      ctx.fill();
+
+      ctx.fillStyle=d.done?"rgba(255,255,255,.4)":"#fff";
+      ctx.font="bold 16px system-ui";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      ctx.fillText(d.n,d.x,d.y);
+    }
+
+    setLevel(((performance.now()-start)/1000).toFixed(1)+"s");
+
+    if(next<=count){
+      animationFrame=requestAnimationFrame(loop);
+    }
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startHoldMeter(){
+  let holding=false;
+  let start=0;
+  let value=0;
+  let finished=false;
+
+  gameArea.innerHTML=`
+    <div class="bigNumber" id="holdValue">0.00s</div>
+    <button id="holdButton" style="
+      width:min(80vw,360px);
+      aspect-ratio:1;
+      border-radius:50%;
+      border:none;
+      background:linear-gradient(145deg,#7c3aed,#ec4899);
+      color:white;
+      font-size:30px;
+      font-weight:800;
+      box-shadow:0 25px 60px rgba(124,58,237,.35);
+      touch-action:none;
+    ">HALTEN</button>
+  `;
+
+  const btn=document.getElementById("holdButton");
+  const valueEl=document.getElementById("holdValue");
+
+  function down(e){
+    e.preventDefault();
+    if(finished)return;
+    holding=true;
+    start=performance.now()-value*1000;
+  }
+
+  function up(e){
+    e.preventDefault();
+    holding=false;
+
+    if(value>=5){
+      finished=true;
+      setStatus("Ziel erreicht 🎉");
+      setMessage("Du hast "+value.toFixed(2)+" Sekunden gehalten.");
+      addRestartButton(startHoldMeter);
+    }
+  }
+
+  btn.onpointerdown=down;
+  btn.onpointerup=up;
+  btn.onpointercancel=up;
+  btn.onpointerleave=up;
+
+  function loop(){
+    if(holding&&!finished){
+      value=(performance.now()-start)/1000;
+      value=Math.min(value,10);
+      valueEl.textContent=value.toFixed(2)+"s";
+      setScore(Math.floor(value*10));
+    }
+
+    if(!finished)animationFrame=requestAnimationFrame(loop);
+  }
+
+  setStatus("Halte mindestens 5 Sekunden");
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startWordScramble(){
+  const words=[
+    "GALAXY","ROCKET","PIXEL","NEON","THUNDER",
+    "SPEED","GAMER","PLANET","MEMORY","BRICK",
+    "LASER","TIGER","DRAGON","COMPUTER"
+  ];
+
+  let score=0;
+  let current="";
+
+  gameArea.innerHTML=`
+    <div class="bigNumber" id="scrambled"></div>
+    <input id="wordInput"
+      style="
+        width:100%;
+        max-width:420px;
+        display:block;
+        margin:15px auto;
+        padding:16px;
+        border-radius:15px;
+        border:1px solid rgba(255,255,255,.12);
+        background:#111827;
+        color:white;
+        font-size:24px;
+        text-align:center;
+        text-transform:uppercase;
+      "
+      autocomplete="off"
+      placeholder="Wort eingeben">
+    <button id="wordBtn" class="gameButton">Prüfen</button>
+  `;
+
+  const scrambled=document.getElementById("scrambled");
+  const input=document.getElementById("wordInput");
+
+  function next(){
+    current=words[randInt(0,words.length-1)];
+    let mixed=current.split("").sort(()=>Math.random()-.5).join("");
+
+    if(mixed===current){
+      mixed=current.split("").reverse().join("");
+    }
+
+    scrambled.textContent=mixed;
+    input.value="";
+    input.focus();
+  }
+
+  function submit(){
+    if(input.value.trim().toUpperCase()===current){
+      score++;
+      setScore(score);
+      setStatus("Richtig ✅");
+      next();
+    }else{
+      setStatus("Falsch");
+    }
+  }
+
+  document.getElementById("wordBtn").onclick=submit;
+  input.onkeydown=e=>{
+    if(e.key==="Enter")submit();
+  };
+
+  setScore(0);
+  next();
+}
+
+
+function startAimTrainer(){
+  const {canvas,ctx}=createCanvas();
+  let target=null;
+  let score=0;
+  let timeLeft=30;
+  let last=performance.now();
+
+  function spawn(){
+    target={
+      x:randInt(45,canvas.width-45),
+      y:randInt(45,canvas.height-45),
+      r:randInt(20,34)
+    };
+  }
+
+  spawn();
+  setScore(0);
+  setLevel("30.0s");
+  setStatus("Treffe das Ziel");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+    if(target&&Math.hypot(p.x-target.x,p.y-target.y)<=target.r){
+      score++;
+      setScore(score);
+      spawn();
+    }
+  };
+
+  function loop(now){
+    const dt=(now-last)/1000;
+    last=now;
+    timeLeft-=dt;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="rgba(255,255,255,.06)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    if(target){
+      ctx.beginPath();
+      ctx.arc(target.x,target.y,target.r,0,Math.PI*2);
+      ctx.fillStyle="#ff375f";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(target.x,target.y,target.r*.45,0,Math.PI*2);
+      ctx.fillStyle="#fff";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(target.x,target.y,target.r*.2,0,Math.PI*2);
+      ctx.fillStyle="#ff375f";
+      ctx.fill();
+    }
+
+    setLevel(Math.max(0,timeLeft).toFixed(1)+"s");
+
+    if(timeLeft<=0){
+      setStatus("Zeit vorbei");
+      setMessage("Treffer: "+score);
+      addRestartButton(startAimTrainer);
+      return;
+    }
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startLaneRacer(){
+  const {canvas,ctx}=createCanvas();
+  const lanes=3;
+  const laneW=canvas.width/lanes;
+  let player=1;
+  let cars=[];
+  let score=0;
+  let speed=230;
+  let last=performance.now();
+  let spawnTimer=0;
+  let running=true;
+
+  setScore(0);
+  setLevel("Level 1");
+  setStatus("Weiche den Fahrzeugen aus");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+    player=clamp(Math.floor(p.x/laneW),0,2);
+  };
+
+  canvas.onpointermove=e=>{
+    if(e.buttons||e.pointerType==="touch"){
+      const p=pointerPosition(canvas,e);
+      player=clamp(Math.floor(p.x/laneW),0,2);
+    }
+  };
+
+  function loop(now){
+    if(!running)return;
+
+    const dt=Math.min(.03,(now-last)/1000);
+    last=now;
+    spawnTimer+=dt;
+
+    if(spawnTimer>.72){
+      spawnTimer=0;
+      cars.push({
+        lane:randInt(0,2),
+        y:-90,
+        h:75
+      });
+    }
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#141821";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.strokeStyle="rgba(255,255,255,.16)";
+    ctx.lineWidth=3;
+    ctx.setLineDash([25,25]);
+
+    for(let i=1;i<3;i++){
+      ctx.beginPath();
+      ctx.moveTo(i*laneW,0);
+      ctx.lineTo(i*laneW,canvas.height);
+      ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+
+    for(let i=cars.length-1;i>=0;i--){
+      const car=cars[i];
+      car.y+=speed*dt;
+
+      if(
+        car.lane===player &&
+        car.y+car.h>canvas.height-100 &&
+        car.y<canvas.height-20
+      ){
+        running=false;
+        setStatus("Crash 💥");
+        setMessage("Punkte: "+score);
+        addRestartButton(startLaneRacer);
+        return;
+      }
+
+      if(car.y>canvas.height+100){
+        cars.splice(i,1);
+        score++;
+        setScore(score);
+        speed+=3;
+        continue;
+      }
+
+      const x=car.lane*laneW+laneW/2;
+
+      ctx.fillStyle="#ff453a";
+      ctx.beginPath();
+      ctx.roundRect(x-28,car.y,56,car.h,14);
+      ctx.fill();
+
+      ctx.fillStyle="#b9e7ff";
+      ctx.fillRect(x-20,car.y+12,40,20);
+
+      ctx.fillStyle="#111";
+      ctx.fillRect(x-27,car.y+50,9,14);
+      ctx.fillRect(x+18,car.y+50,9,14);
+    }
+
+    const px=player*laneW+laneW/2;
+
+    ctx.fillStyle="#0a84ff";
+    ctx.beginPath();
+    ctx.roundRect(px-30,canvas.height-95,60,75,16);
+    ctx.fill();
+
+    ctx.fillStyle="#d7f1ff";
+    ctx.fillRect(px-20,canvas.height-78,40,22);
+
+    setLevel("Speed "+Math.round(speed));
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startHeliCave(){
+  const {canvas,ctx}=createCanvas();
+  let heli={x:130,y:canvas.height/2,vy:0};
+  let walls=[];
+  let distance=0;
+  let last=performance.now();
+  let running=true;
+
+  setScore(0);
+  setStatus("Halte den Helikopter durch die Höhle");
+  setLevel("0m");
+
+  function input(){
+    heli.vy-=220;
+  }
+
+  canvas.onpointerdown=input;
+
+  window.onkeydown=e=>{
+    if(e.code==="Space"||e.key==="ArrowUp"){
+      e.preventDefault();
+      input();
+    }
+  };
+
+  function makeWall(){
+    const gap=170;
+    const center=randInt(100,canvas.height-100);
+    walls.push({
+      x:canvas.width+20,
+      gapTop:center-gap/2,
+      gapBottom:center+gap/2,
+      w:80
+    });
+  }
+
+  makeWall();
+  setTimeout(makeWall,900);
+
+  function loop(now){
+    if(!running)return;
+
+    const dt=Math.min(.03,(now-last)/1000);
+    last=now;
+
+    heli.vy+=430*dt;
+    heli.vy*=.985;
+    heli.y+=heli.vy*dt;
+
+    if(Math.random()<.018)makeWall();
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const bg=ctx.createLinearGradient(0,0,0,canvas.height);
+    bg.addColorStop(0,"#08111b");
+    bg.addColorStop(1,"#15102a");
+    ctx.fillStyle=bg;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    for(let i=walls.length-1;i>=0;i--){
+      const w=walls[i];
+      w.x-=220*dt;
+
+      ctx.fillStyle="#1b2333";
+      ctx.fillRect(w.x,0,w.w,w.gapTop);
+      ctx.fillRect(w.x,w.gapBottom,w.w,canvas.height-w.gapBottom);
+
+      if(w.x+w.w<0)walls.splice(i,1);
+
+      if(
+        heli.x+18>w.x &&
+        heli.x-18<w.x+w.w &&
+        (heli.y-15<w.gapTop||heli.y+15>w.gapBottom)
+      ){
+        running=false;
+        setStatus("Absturz");
+        setMessage("Distanz: "+Math.floor(distance)+" m");
+        addRestartButton(startHeliCave);
+        return;
+      }
+    }
+
+    if(heli.y<0||heli.y>canvas.height){
+      running=false;
+      setStatus("Absturz");
+      setMessage("Distanz: "+Math.floor(distance)+" m");
+      addRestartButton(startHeliCave);
+      return;
+    }
+
+    ctx.fillStyle="#7c3aed";
+    ctx.beginPath();
+    ctx.ellipse(heli.x,heli.y,24,15,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle="#c4b5fd";
+    ctx.fillRect(heli.x-16,heli.y-25,32,5);
+
+    distance+=dt*20;
+    setScore(Math.floor(distance));
+    setLevel(Math.floor(distance)+"m");
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startFishDash(){
+  const {canvas,ctx}=createCanvas();
+
+  let fish={x:120,y:canvas.height/2,vy:0};
+  let items=[];
+  let score=0;
+  let speed=180;
+  let last=performance.now();
+
+  setScore(0);
+  setStatus("Sammle Blasen, meide Minen");
+  setLevel("Meer 1");
+
+  canvas.onpointermove=e=>{
+    const p=pointerPosition(canvas,e);
+    fish.y=clamp(p.y,30,canvas.height-30);
+  };
+
+  canvas.onpointerdown=canvas.onpointermove;
+
+  function spawn(){
+    const good=Math.random()<.72;
+    items.push({
+      x:canvas.width+30,
+      y:randInt(35,canvas.height-35),
+      good,
+      r:good?11:17
+    });
+  }
+
+  function loop(now){
+    const dt=Math.min(.03,(now-last)/1000);
+    last=now;
+
+    if(Math.random()<.025)spawn();
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const sea=ctx.createLinearGradient(0,0,0,canvas.height);
+    sea.addColorStop(0,"#06283d");
+    sea.addColorStop(1,"#013049");
+    ctx.fillStyle=sea;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    for(let i=0;i<items.length;i++){
+      const o=items[i];
+      o.x-=speed*dt;
+
+      const hit=Math.hypot(o.x-fish.x,o.y-fish.y)<o.r+18;
+
+      if(hit){
+        if(o.good){
+          score++;
+          setScore(score);
+        }else{
+          setStatus("Mine erwischt 💥");
+          setMessage("Punkte: "+score);
+          addRestartButton(startFishDash);
+          return;
+        }
+
+        items.splice(i,1);
+        i--;
+        continue;
+      }
+
+      ctx.beginPath();
+      ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+
+      if(o.good){
+        ctx.fillStyle="#5de4ff";
+        ctx.fill();
+        ctx.strokeStyle="#d7fbff";
+        ctx.stroke();
+      }else{
+        ctx.fillStyle="#ff375f";
+        ctx.fill();
+        ctx.strokeStyle="#fff";
+        ctx.stroke();
+
+        ctx.strokeStyle="#ff8ba7";
+        for(let j=0;j<8;j++){
+          const a=j*Math.PI/4;
+          ctx.beginPath();
+          ctx.moveTo(o.x+Math.cos(a)*o.r,o.y+Math.sin(a)*o.r);
+          ctx.lineTo(o.x+Math.cos(a)*(o.r+8),o.y+Math.sin(a)*(o.r+8));
+          ctx.stroke();
+        }
+      }
+    }
+
+    ctx.fillStyle="#ff9f0a";
+    ctx.beginPath();
+    ctx.ellipse(fish.x,fish.y,28,16,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(fish.x-22,fish.y);
+    ctx.lineTo(fish.x-42,fish.y-18);
+    ctx.lineTo(fish.x-42,fish.y+18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle="#fff";
+    ctx.beginPath();
+    ctx.arc(fish.x+10,fish.y-5,4,0,Math.PI*2);
+    ctx.fill();
+
+    speed+=dt*2;
+    setLevel("Speed "+Math.round(speed));
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startBasketShot(){
+  const {canvas,ctx}=createCanvas();
+  let ball={x:canvas.width*.15,y:canvas.height-60};
+  let dragging=false;
+  let start=null;
+  let vx=0,vy=0;
+  let flying=false;
+  let score=0;
+  let hoops=[
+    {x:canvas.width*.74,y:canvas.height*.38,r:30}
+  ];
+
+  setScore(0);
+  setStatus("Ziehe den Ball nach hinten und lasse los");
+
+  canvas.onpointerdown=e=>{
+    if(flying)return;
+    const p=pointerPosition(canvas,e);
+
+    if(Math.hypot(p.x-ball.x,p.y-ball.y)<40){
+      dragging=true;
+      start=p;
+    }
+  };
+
+  canvas.onpointermove=e=>{
+    if(!dragging)return;
+    const p=pointerPosition(canvas,e);
+    ball.x=p.x;
+    ball.y=p.y;
+  };
+
+  canvas.onpointerup=e=>{
+    if(!dragging)return;
+
+    const p=pointerPosition(canvas,e);
+
+    vx=(start.x-p.x)*3.2;
+    vy=(start.y-p.y)*3.2;
+
+    dragging=false;
+    flying=true;
+  };
+
+  function reset(){
+    ball.x=canvas.width*.15;
+    ball.y=canvas.height-60;
+    vx=0;
+    vy=0;
+    flying=false;
+  }
+
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#79b6ff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#58a64b";
+    ctx.fillRect(0,canvas.height-90,canvas.width,90);
+
+    const h=hoops[0];
+
+    ctx.strokeStyle="#8c4a20";
+    ctx.lineWidth=10;
+    ctx.beginPath();
+    ctx.moveTo(h.x+30,h.y);
+    ctx.lineTo(h.x+30,h.y+110);
+    ctx.stroke();
+
+    ctx.strokeStyle="#ff4d00";
+    ctx.lineWidth=8;
+    ctx.beginPath();
+    ctx.arc(h.x,h.y,h.r,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.strokeStyle="white";
+    ctx.lineWidth=3;
+    for(let i=0;i<7;i++){
+      const x=h.x-h.r+i*h.r/3;
+      ctx.beginPath();
+      ctx.moveTo(x,h.y+2);
+      ctx.lineTo(x-5,h.y+35);
+      ctx.stroke();
+    }
+
+    if(flying){
+      vy+=500/60;
+      ball.x+=vx/60;
+      ball.y+=vy/60;
+    }
+
+    const scored=
+      flying &&
+      Math.hypot(ball.x-h.x,ball.y-h.y)<h.r;
+
+    if(scored){
+      score++;
+      setScore(score);
+      setStatus("Korb! 🏀");
+      reset();
+    }
+
+    if(flying && (ball.y>canvas.height+60||ball.x>canvas.width+60||ball.x< -60)){
+      reset();
+    }
+
+    ctx.fillStyle="#ff9f0a";
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,18,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle="#8a4300";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,18,0,Math.PI*2);
+    ctx.stroke();
+
+    if(!flying){
+      ctx.fillStyle="rgba(0,0,0,.3)";
+      ctx.beginPath();
+      ctx.arc(ball.x,ball.y+20,14,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startGoalKeeper(){
+  const {canvas,ctx}=createCanvas();
+  let keeperX=canvas.width/2;
+  let shots=10;
+  let saved=0;
+  let shot=null;
+  let timer=0;
+
+  setScore(0);
+  setLevel("10 Schüsse");
+  setStatus("Tippe links, Mitte oder rechts");
+
+  canvas.onpointerdown=e=>{
+    const p=pointerPosition(canvas,e);
+
+    if(shot)return;
+
+    const zone=
+      p.x<canvas.width/3?0:
+      p.x<canvas.width*2/3?1:2;
+
+    keeperX=
+      zone===0?canvas.width*.22:
+      zone===1?canvas.width*.5:
+      canvas.width*.78;
+  };
+
+  function newShot(){
+    const target=randInt(0,2);
+
+    shot={
+      x:canvas.width*.5,
+      y:80,
+      target,
+      progress:0
+    };
+  }
+
+  newShot();
+
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#17863b";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#0b6630";
+    ctx.fillRect(20,50,canvas.width-40,canvas.height-80);
+
+    ctx.strokeStyle="white";
+    ctx.lineWidth=4;
+    ctx.strokeRect(30,40,canvas.width-60,canvas.height-70);
+
+    ctx.fillStyle="#ffd60a";
+    ctx.beginPath();
+    ctx.arc(keeperX,canvas.height-95,30,0,Math.PI*2);
+    ctx.fill();
+
+    if(shot){
+      shot.progress+=.015;
+
+      const tx=
+        shot.target===0?canvas.width*.22:
+        shot.target===1?canvas.width*.5:
+        canvas.width*.78;
+
+      const ty=canvas.height-95;
+
+      shot.x+=((tx-shot.x)*.055);
+      shot.y+=((ty-shot.y)*.055);
+
+      ctx.fillStyle="#fff";
+      ctx.beginPath();
+      ctx.arc(shot.x,shot.y,13,0,Math.PI*2);
+      ctx.fill();
+
+      if(shot.progress>1){
+        const keeperZone=
+          keeperX<canvas.width/3?0:
+          keeperX<canvas.width*2/3?1:2;
+
+        if(keeperZone===shot.target){
+          saved++;
+          setScore(saved);
+          setStatus("GEHALTEN 🧤");
+        }else{
+          setStatus("TOR ⚽");
+        }
+
+        shots--;
+        setLevel(shots+" Schüsse übrig");
+
+        if(shots<=0){
+          setMessage("Gehalten: "+saved+" / 10");
+          addRestartButton(startGoalKeeper);
+          return;
+        }
+
+        timer=25;
+        shot=null;
+      }
+    }else{
+      timer--;
+      if(timer<=0)newShot();
+    }
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+function startNeonRunner(){
+  const {canvas,ctx}=createCanvas();
+
+  let player={
+    x:120,
+    y:canvas.height-90,
+    vy:0,
+    grounded:true
+  };
+
+  let obstacles=[];
+  let score=0;
+  let speed=270;
+  let last=performance.now();
+  let running=true;
+
+  setScore(0);
+  setStatus("Tippe zum Springen");
+  setLevel("Speed 270");
+
+  function jump(){
+    if(player.grounded){
+      player.vy=-550;
+      player.grounded=false;
+    }
+  }
+
+  canvas.onpointerdown=jump;
+
+  window.onkeydown=e=>{
+    if(e.code==="Space"||e.key==="ArrowUp"){
+      e.preventDefault();
+      jump();
+    }
+  };
+
+  function spawn(){
+    obstacles.push({
+      x:canvas.width+30,
+      w:randInt(24,40),
+      h:randInt(35,75)
+    });
+  }
+
+  function loop(now){
+    if(!running)return;
+
+    const dt=Math.min(.03,(now-last)/1000);
+    last=now;
+
+    if(Math.random()<.018)spawn();
+
+    player.vy+=1450*dt;
+    player.y+=player.vy*dt;
+
+    const ground=canvas.height-50;
+
+    if(player.y>=ground){
+      player.y=ground;
+      player.vy=0;
+      player.grounded=true;
+    }
+
+    for(let i=obstacles.length-1;i>=0;i--){
+      const o=obstacles[i];
+      o.x-=speed*dt;
+
+      const px1=player.x-18;
+      const px2=player.x+18;
+      const py1=player.y-40;
+      const py2=player.y;
+
+      const ox1=o.x;
+      const ox2=o.x+o.w;
+      const oy1=ground-o.h;
+
+      if(px2>ox1&&px1<ox2&&py2>oy1&&py1<ground){
+        running=false;
+        setStatus("Crash 💥");
+        setMessage("Punkte: "+score);
+        addRestartButton(startNeonRunner);
+        return;
+      }
+
+      if(ox2<0){
+        obstacles.splice(i,1);
+        score++;
+        setScore(score);
+      }
+    }
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const sky=ctx.createLinearGradient(0,0,0,canvas.height);
+    sky.addColorStop(0,"#070b1c");
+    sky.addColorStop(1,"#241044");
+    ctx.fillStyle=sky;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="#14142a";
+    ctx.fillRect(0,ground,canvas.width,50);
+
+    for(const o of obstacles){
+      ctx.fillStyle="#ff2bd6";
+      ctx.fillRect(o.x,ground-o.h,o.w,o.h);
+
+      ctx.shadowColor="#ff2bd6";
+      ctx.shadowBlur=20;
+      ctx.fillRect(o.x,ground-o.h,o.w,o.h);
+      ctx.shadowBlur=0;
+    }
+
+    ctx.fillStyle="#30d5ff";
+    ctx.beginPath();
+    ctx.roundRect(player.x-18,player.y-40,36,40,10);
+    ctx.fill();
+
+    ctx.fillStyle="#fff";
+    ctx.fillRect(player.x-8,player.y-30,16,5);
+
+    speed+=dt*5;
+    setLevel("Speed "+Math.round(speed));
+
+    animationFrame=requestAnimationFrame(loop);
+  }
+
+  animationFrame=requestAnimationFrame(loop);
+}
+
+
+/* TEIL 3 ENDE */
+
+/* GAME ROUTER */
+
+const gameStarts={
+  galaxy:startGalaxy,
+  snake:startSnake,
+  perfect:startPerfectTime,
+  reaction:startReactionRush,
+  memory:startMemory,
+  "2048":start2048,
+  brick:startBrickBlast,
+  tictactoe:startTicTacToe,
+  pong:startPong,
+  flappy:startFlappySky,
+  lightsout:startLightsOut,
+  colormatch:startColorMatch,
+  whack:startWhackSpot,
+  connect4:startConnect4,
+  simon:startSimon,
+  higherlower:startHigherLower,
+  quickmath:startQuickMath,
+  coincatch:startCoinCatch,
+  safetiles:startSafeTiles,
+  connectdots:startConnectDots,
+  guessnumber:startGuessNumber,
+  diceduel:startDiceDuel,
+  oddoneout:startOddOneOut,
+  numbersprint:startNumberSprint,
+  holdmeter:startHoldMeter,
+  wordscramble:startWordScramble,
+  aimtrainer:startAimTrainer,
+  laneracer:startLaneRacer,
+  helicave:startHeliCave,
+  fishdash:startFishDash,
+  basketshot:startBasketShot,
+  goalkeeper:startGoalKeeper,
+  neonrunner:startNeonRunner
+};
+
+const gameParam=new URLSearchParams(location.search).get("game");
+
+if(gameParam && gameStarts[gameParam]){
+  gameStarts[gameParam]();
+}else if(typeof startGalaxy==="function"){
+  startGalaxy();
+}
+
+
+/* ABSCHLUSS DER DATEI */
+
+</script>
 </body>
 </html>
+  
