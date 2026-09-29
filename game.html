@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="de">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#070b14">
@@ -90,4 +91,38 @@ function startSafeTiles(){startSafe()}function startConnectDots(){startDots()}fu
 function boot(id){const map={galaxy:startGalaxy,snake:startSnake,perfect:startPerfect,reaction:startReaction,memory:startMemory,'2048':start2048,brick:startBrick,tictactoe:startTTT,pong:startPong,flappy:startFlappy,lightsout:startLights,colormatch:startColor,whack:startWhack,connect4:startConnect4,simon:startSimon,higherlower:startHigher,quickmath:startMath,coincatch:startCoin,safetiles:startSafe,connectdots:startDots,guessnumber:startGuess,diceduel:startDice,oddoneout:startOdd,numbersprint:startNumSprint,holdmeter:startHold,wordscramble:startWords,aimtrainer:startAim,laneracer:startLane,helicave:startHeli,fishdash:startFish,basketshot:startBasket,goalkeeper:startGoal,neonrunner:startNeon};(map[id]||startGalaxy)()}
 /* Extra input so codes are available inside games even when search is not used. */
 boot(gameId);
-</script></body></html>
+</script><<script>
+const SUPABASE_URL = "https://qvxnacgnuocnhuagpqpf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LQjkI1OC7fUIHnYslwX3MQ_xpkXtwEg";
+
+const ggSupabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function saveOnlineScore(gameId, playerName, score) {
+  if (!playerName || !Number.isFinite(score)) return;
+
+  await ggSupabase.from("scores").insert({
+    game_id: gameId,
+    player_name: playerName,
+    score: Math.floor(score)
+  });
+}
+
+async function getOnlineScores(gameId) {
+  const { data, error } = await ggSupabase
+    .from("scores")
+    .select("player_name, score, created_at")
+    .eq("game_id", gameId)
+    .order("score", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Rangliste:", error);
+    return [];
+  }
+
+  return data || [];
+}
+</script>/body></html>
