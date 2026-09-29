@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameGalaxy - Endlevel</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #090b16;
+    color: white;
+    text-align: center;
+}
+
+.game-wrapper {
+    max-width: 900px;
+    margin: auto;
+    padding: 15px;
+}
+
+h1 {
+    margin: 8px 0;
+    font-size: 32px;
+}
+
+.subtitle {
+    color: #aab1d6;
+    margin-bottom: 12px;
+}
+
+.hud {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.hud-box {
+    flex: 1;
+    padding: 10px;
+    background: #151a30;
+    border: 1px solid #30385e;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+canvas {
+    width: 100%;
+    max-width: 850px;
+    height: auto;
+    border: 3px solid #30385e;
+    border-radius: 16px;
+    background: #05060c;
+    display: block;
+    margin: auto;
+    touch-action: none;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+button {
+    border: none;
+    border-radius: 14px;
+    padding: 14px 20px;
+    background: #6c5ce7;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.control-button {
+    width: 70px;
+    font-size: 25px;
+}
+
+.settings-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 24px;
+}
+
+.status {
+    min-height: 25px;
+    color: #c7cbed;
+}
+
+.panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+}
+
+.panel-box {
+    width: min(420px, 100%);
+    background: #151a30;
+    border: 2px solid #3b4470;
+    border-radius: 20px;
+    padding: 25px;
+}
+
+.panel-box h2 {
+    margin-top: 0;
+}
+
+.info-text {
+    background: #0c1020;
+    border-radius: 14px;
+    padding: 18px;
+    line-height: 1.7;
+    margin: 15px 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 500px) {
+    h1 {
+        font-size: 25px;
+    }
+
+    .hud-box {
+        font-size: 13px;
+        padding: 8px 4px;
+    }
+
+    button {
+        padding: 12px 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<button class="settings-button" id="settingsButton">⚙️</button>
+
+<div class="game-wrapper">
+
+    <h1>🎮 GameGalaxy</h1>
+    <div class="subtitle">ENDLEVEL</div>
+
+    <div class="hud">
+        <div class="hud-box">
+            ⭐ <span id="score">0</span>
+        </div>
+
+        <div class="hud-box">
+            ❤️ <span id="lives">3</span>
+        </div>
+
+        <div class="hud-box">
+            🆙 Level <span id="level">1</span>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="850" height="500"></canvas>
+
+    <div class="controls">
+        <button class="control-button" id="leftButton">◀</button>
+        <button id="startButton">START</button>
+        <button class="control-button" id="rightButton">▶</button>
+    </div>
+
+    <p class="status" id="status">
+        Drücke START und besiege die Gegner!
+    </p>
+
+</div>
+
+<!-- SETTINGS -->
+<div class="panel" id="settingsPanel">
+
+    <div class="panel-box">
+
+        <h2>⚙️ Settings</h2>
+
+        <button id="infoButton">
+            ℹ️ Info
+        </button>
+
+        <br><br>
+
+        <button id="closeSettings">
+            Schließen
+        </button>
+
+    </div>
+
+</div>
+
+<!-- INFO -->
+<div class="panel" id="infoPanel">
+
+    <div class="panel-box">
+
+        <h2>ℹ️ Info</h2>
+
+        <div class="info-text">
+            <strong>This is my first game</strong>
+            <br>
+            Yusuf 7D
+        </div>
+
+        <button id="closeInfo">
+            Zurück
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const scoreText = document.getElementById("score");
+const livesText = document.getElementById("lives");
+const levelText = document.getElementById("level");
+const statusText = document.getElementById("status");
+
+const startButton = document.getElementById("startButton");
+const leftButton = document.getElementById("leftButton");
+const rightButton = document.getElementById("rightButton");
+
+const settingsButton = document.getElementById("settingsButton");
+const settingsPanel = document.getElementById("settingsPanel");
+const infoPanel = document.getElementById("infoPanel");
+
+const infoButton = document.getElementById("infoButton");
+const closeSettings = document.getElementById("closeSettings");
+const closeInfo = document.getElementById("closeInfo");
+
+let player;
+let bullets;
+let enemies;
+let enemyBullets;
+
+let score = 0;
+let lives = 3;
+let level = 1;
+
+let gameRunning = false;
+let gameOver = false;
+let boss = null;
+
+let keys = {
+    left: false,
+    right: false
+};
+
+let enemyTimer = 0;
+let shootTimer = 0;
+let animationId = null;
+
+
+/* =========================
+   SPIELER
+========================= */
+
+function createPlayer() {
+
+    return {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 65,
+        width: 50,
+        height: 35,
+        speed: 7
+    };
+
+}
+
+
+/* =========================
+   SPIEL START
+========================= */
+
+function startGame() {
+
+    score = 0;
+    lives = 3;
+    level = 1;
+
+    player = createPlayer();
+
+    bullets = [];
+    enemies = [];
+    enemyBullets = [];
+
+    boss = null;
+
+    gameOver = false;
+    gameRunning = true;
+
+    updateHud();
+
+    statusText.textContent =
+        "Besiege die Gegner! Erreiche Level 5 für den Boss.";
+
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+    }
+
+    gameLoop();
+}
+
+
+/* =========================
+   SPIELER ZEICHNEN
+========================= */
+
+function drawPlayer() {
+
+    ctx.fillStyle = "#6c5ce7";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        player.x + player.width / 2,
+        player.y
+    );
+
+    ctx.lineTo(
+        player.x,
+        player.y + player.height
+    );
+
+    ctx.lineTo(
+        player.x + player.width,
+        player.y + player.height
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+}
+
+
+/* =========================
+   SCHÜSSE
+========================= */
+
+function shoot() {
+
+    if (!gameRunning) return;
+
+    bullets.push({
+        x: player.x + player.width / 2 - 3,
+        y: player.y - 10,
+        width: 6,
+        height: 15,
+        speed: 9
+    });
+
+}
+
+
+/* =========================
+   GEGNER ERSTELLEN
+========================= */
+
+function createEnemy() {
+
+    const size = 30 + Math.random() * 15;
+
+    enemies.push({
+        x: Math.random() * (canvas.width - size),
+        y: -size,
+        width: size,
+        height: size,
+        speed: 1.5 + level * 0.35
+    });
+
+}
+
+
+/* =========================
+   BOSS
+========================= */
+
+function createBoss() {
+
+    boss = {
+        x: canvas.width / 2 - 100,
+        y: 55,
+        width: 200,
+        height: 70,
+        health: 30,
+        maxHealth: 30,
+        direction: 1,
+        speed: 3
+    };
+
+    statusText.textContent =
+        "👹 BOSS LEVEL! Besiege den Endgegner!";
+
+}
+
+
+/* =========================
+   KOLLISION
+========================= */
+
+function collision(a, b) {
+
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+
+}
+
+
+/* =========================
+   SPIEL UPDATE
+========================= */
+
+function update() {
+
+    if (!gameRunning) return;
+
+
+    /* Spieler */
+
+    if (keys.left) {
+        player.x -= player.speed;
+    }
+
+    if (keys.right) {
+        player.x += player.speed;
+    }
+
+    if (player.x < 0) {
+        player.x = 0;
+    }
+
+    if (player.x + player.width > canvas.width) {
+        player.x = canvas.width - player.width;
+    }
+
+
+    /* Automatisches Schießen */
+
+    shootTimer++;
+
+    if (shootTimer > 28) {
+
+        shoot();
+
+        shootTimer = 0;
+
+    }
+
+
+    /* Kugeln */
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+
+        bullets[i].y -= bullets[i].speed;
+
+        if (bullets[i].y < -20) {
+
+            bullets.splice(i, 1);
+
+        }
+
+    }
+
+
+    /* Gegner erzeugen */
+
+    enemyTimer++;
+
+    if (!boss && enemyTimer > Math.max(20, 70 - level * 6)) {
+
+        createEnemy();
+
+        enemyTimer = 0;
+
+    }
+
+
+    /* Gegner bewegen */
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+
+        const enemy = enemies[i];
+
+        enemy.y += enemy.speed;
+
+
+        /* Treffer Spieler */
+
+        if (collision(player, enemy)) {
+
+            enemies.splice(i, 1);
+
+            lives--;
+
+            updateHud();
+
+            if (lives <= 0) {
+
+                endGame();
+
+                return;
+
+            }
+
+            continue;
+
+        }
+
+
+        /* Gegner unten angekommen */
+
+        if (enemy.y > canvas.height) {
+
+            enemies.splice(i, 1);
+
+            lives--;
+
+            updateHud();
+
+            if (lives <= 0) {
+
+                endGame();
+
+                return;
+
+            }
+
+        }
+
+    }
+
+
+    /* Kugeln gegen Gegner */
+
+    for (let b = bullets.length - 1; b >= 0; b--) {
+
+        let hit = false;
+
+        for (let e = enemies.length - 1; e >= 0; e--) {
+
+            if (collision(bullets[b], enemies[e])) {
+
+                enemies.splice(e, 1);
+                bullets.splice(b, 1);
+
+                score += 10;
+
+                hit = true;
+
+                break;
+
+            }
+
+        }
+
+        if (hit) continue;
+
+
+        /* Boss treffen */
+
+        if (boss && bullets[b] && collision(bullets[b], boss)) {
+
+            boss.health--;
+
+            bullets.splice(b, 1);
+
+            score += 25;
+
+            if (boss.health <= 0) {
+
+                boss = null;
+
+                score += 1000;
+
+                statusText.textContent =
+                    "🏆 BOSS BESIEGT! DU HAST GEWONNEN!";
+
+                gameRunning = false;
+
+                updateHud();
+
+                draw();
+
+                return;
+
+            }
+
+        }
+
+    }
+
+
+    /* Level erhöhen */
+
+    const newLevel = Math.min(
+        5,
+        Math.floor(score / 200) + 1
+    );
+
+    if (newLevel !== level) {
+
+        level = newLevel;
+
+        updateHud();
+
+        if (level === 5 && !boss) {
+
+            enemies = [];
+
+            createBoss();
+
+        }
+
+    }
+
+
+    /* Boss bewegen */
+
+    if (boss) {
+
+        boss.x += boss.speed * boss.direction;
+
+        if (
+            boss.x <= 0 ||
+            boss.x + boss.width >= canvas.width
+        ) {
+
+            boss.direction *= -1;
+
+        }
+
+    }
+
+
+    updateHud();
+
+}
+
+
+/* =========================
+   ZEICHNEN
+========================= */
+
+function drawBackground() {
+
+    ctx.fillStyle = "#05060c";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* Sterne */
+
+    ctx.fillStyle = "#30385e";
+
+    for (let i = 0; i < 70; i++) {
+
+        const x = (i * 97) % canvas.width;
+        const y = (i * 53) % canvas.height;
+
+        ctx.fillRect(x, y, 2, 2);
+
+    }
+
+}
+
+
+function draw() {
+
+    drawBackground();
+
+    if (!player) return;
+
+    drawPlayer();
+
+
+    /* Kugeln */
+
+    ctx.fillStyle = "#00e5ff";
+
+    for (const bullet of bullets) {
+
+        ctx.fillRect(
+            bullet.x,
+            bullet.y,
+            bullet.width,
+            bullet.height
+        );
+
+    }
+
+
+    /* Gegner */
+
+    for (const enemy of enemies) {
+
+        ctx.fillStyle = "#ff4757";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2,
+            enemy.width / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    /* Boss */
+
+    if (boss) {
+
+        ctx.fillStyle = "#9b59b6";
+
+        ctx.fillRect(
+            boss.x,
+            boss.y,
+            boss.width,
+            boss.height
+        );
+
+        /* Boss-Augen */
+
+        ctx.fillStyle = "white";
+
+        ctx.fillRect(
+            boss.x + 45,
+            boss.y + 20,
+            25,
+            20
+        );
+
+        ctx.fillRect(
+            boss.x + boss.width - 70,
+            boss.y + 20,
+            25,
+            20
+        );
+
+
+        /* Boss Lebensleiste */
+
+        ctx.fillStyle = "#333";
+
+        ctx.fillRect(
+            boss.x,
+            boss.y - 15,
+            boss.width,
+            8
+        );
+
+        ctx.fillStyle = "#ff4757";
+
+        ctx.fillRect(
+            boss.x,
+            boss.y - 15,
+            boss.width *
+            (boss.health / boss.maxHealth),
+            8
+        );
+
+    }
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+    update();
+
+    draw();
+
+    if (gameRunning) {
+
+        animationId =
+            requestAnimationFrame(gameLoop);
+
+    }
+
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function updateHud() {
+
+    scoreText.textContent = score;
+    livesText.textContent = lives;
+    levelText.textContent = level;
+
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function endGame() {
+
+    gameRunning = false;
+    gameOver = true;
+
+    statusText.textContent =
+        "💀 GAME OVER – Drücke START für eine neue Runde.";
+
+    draw();
+
+}
+
+
+/* =========================
+   STEUERUNG
+========================= */
+
+leftButton.addEventListener("pointerdown", () => {
+
+    keys.left = true;
+
+});
+
+leftButton.addEventListener("pointerup", () => {
+
+    keys.left = false;
+
+});
+
+leftButton.addEventListener("pointerleave", () => {
+
+    keys.left = false;
+
+});
+
+rightButton.addEventListener("pointerdown", () => {
+
+    keys.right = true;
+
+});
+
+rightButton.addEventListener("pointerup", () => {
+
+    keys.right = false;
+
+});
+
+rightButton.addEventListener("pointerleave", () => {
+
+    keys.right = false;
+
+});
+
+
+/* Tastatur */
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key === "ArrowLeft") {
+
+        keys.left = true;
+
+    }
+
+    if (event.key === "ArrowRight") {
+
+        keys.right = true;
+
+    }
+
+    if (event.code === "Space") {
+
+        shoot();
+
+    }
+
+});
+
+
+document.addEventListener("keyup", (event) => {
+
+    if (event.key === "ArrowLeft") {
+
+        keys.left = false;
+
+    }
+
+    if (event.key === "ArrowRight") {
+
+        keys.right = false;
+
+    }
+
+});
+
+
+/* START */
+
+startButton.addEventListener("click", () => {
+
+    startGame();
+
+});
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+settingsButton.addEventListener("click", () => {
+
+    settingsPanel.style.display = "flex";
+
+});
+
+
+closeSettings.addEventListener("click", () => {
+
+    settingsPanel.style.display = "none";
+
+});
+
+
+/* =========================
+   INFO
+========================= */
+
+infoButton.addEventListener("click", () => {
+
+    settingsPanel.style.display = "none";
+
+    infoPanel.style.display = "flex";
+
+});
+
+
+closeInfo.addEventListener("click", () => {
+
+    infoPanel.style.display = "none";
+
+    settingsPanel.style.display = "flex";
+
+});
+
+
+/* ESC schließt Fenster */
+
+document.addEventListener("keydown", (event) => {
+
+    if (event.key === "Escape") {
+
+        settingsPanel.style.display = "none";
+        infoPanel.style.display = "none";
+
+    }
+
+});
+
+
+/* Anfang */
+
+drawBackground();
+
+</script>
+
+</body>
+</html>
