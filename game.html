@@ -2,1335 +2,1850 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#050816">
-
-<title>GameGalaxy Game</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>GameGalaxy</title>
 <style>
 *{box-sizing:border-box}
-
-html,body{
- margin:0;
- min-height:100%;
- background:#050816;
- color:#fff;
- font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
-}
-
 body{
- display:flex;
- flex-direction:column
+margin:0;background:#080a17;color:white;font-family:Arial,sans-serif;
+user-select:none;-webkit-user-select:none;min-height:100vh
 }
-
 header{
- height:58px;
- background:#0b1020;
- border-bottom:1px solid #ffffff14;
- display:flex;
- align-items:center;
- justify-content:space-between;
- padding:0 12px;
- gap:10px
+display:flex;align-items:center;gap:12px;padding:12px 15px;
+background:#101329;border-bottom:1px solid #30375d;position:sticky;top:0;z-index:5
 }
-
-.logo{
- font-size:20px;
- font-weight:900
+header a,button{
+border:0;border-radius:11px;padding:11px 15px;background:#6877ff;
+color:white;font-weight:bold;text-decoration:none;cursor:pointer
 }
-
-.logo span{color:#55dfff}
-
-.buttons{
- display:flex;
- gap:7px
+header h1{font-size:19px;margin:0}
+main{max-width:850px;margin:auto;padding:15px}
+.panel{
+background:#11152a;border:1px solid #30375d;border-radius:20px;padding:15px;
+box-shadow:0 15px 40px #0006
 }
-
-button{
- font:inherit;
- cursor:pointer
+.status{
+display:flex;justify-content:space-between;gap:10px;
+color:#cbd1ea;margin-bottom:10px;flex-wrap:wrap
 }
-
-.topbtn{
- border:1px solid #ffffff18;
- background:#171f35;
- color:#fff;
- border-radius:10px;
- padding:8px 11px
-}
-
-main{
- flex:1;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:10px
-}
-
-.gamebox{
- width:min(1000px,100%);
- background:#0c1121;
- border:1px solid #ffffff15;
- border-radius:18px;
- overflow:hidden
-}
-
-.info{
- padding:9px 12px;
- display:flex;
- justify-content:space-between;
- align-items:center;
- gap:10px;
- background:#11182c
-}
-
-.title{
- font-weight:800
-}
-
-.record{
- color:#9da9c8;
- font-size:13px
-}
-
-.canvasWrap{
- position:relative;
- width:100%;
- aspect-ratio:3/2;
- background:#030611
-}
-
 canvas{
- width:100%;
- height:100%;
- display:block;
- touch-action:none
+display:block;width:100%;max-width:720px;height:auto;aspect-ratio:3/2;
+margin:auto;background:#050713;border-radius:15px;touch-action:none
 }
-
-.controls{
- display:none;
- padding:10px;
- gap:10px;
- justify-content:center;
- background:#0b1020
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.big{text-align:center;font-size:50px;font-weight:900;padding:25px}
+.msg{text-align:center;font-size:18px;font-weight:bold;margin:12px}
+.grid{display:grid;gap:8px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.tile{
+min-height:65px;border-radius:12px;background:#242b4e;
+color:white;border:1px solid #3b446f;font-size:22px;font-weight:bold
 }
-
-.control{
- width:80px;
- height:55px;
- border-radius:14px;
- border:1px solid #ffffff18;
- background:#171f35;
- color:white;
- font-size:24px;
- user-select:none;
- -webkit-user-select:none
+input{
+width:100%;padding:12px;border-radius:11px;
+background:#080b18;color:white;border:1px solid #3c456f;
+font-size:18px
 }
-
-@media(max-width:700px){
- .controls{display:flex}
- .record{font-size:11px}
+.touch{
+display:flex;gap:12px;justify-content:center;margin-top:10px
 }
+.touch button{flex:1;font-size:25px;touch-action:none}
+.good{background:#267b4d!important}
+.bad{background:#8d293d!important}
 </style>
 </head>
 
 <body>
 
 <header>
-<div class="logo">🎮 Game<span>Galaxy</span></div>
-
-<div class="buttons">
-<button class="topbtn" id="restart">↻</button>
-<button class="topbtn" id="home">⌂</button>
-</div>
+<a href="index.html">← Games</a>
+<h1 id="title">Game</h1>
 </header>
 
 <main>
+<div class="panel">
 
-<div class="gamebox">
-
-<div class="info">
-<div class="title" id="title">Spiel</div>
-<div class="record" id="record"></div>
+<div class="status">
+<span id="score"></span>
+<span id="info"></span>
 </div>
 
-<div class="canvasWrap">
-<canvas id="game" width="900" height="600"></canvas>
-</div>
-
-<div class="controls">
-<button class="control" data-key="left">←</button>
-<button class="control" data-key="up">↑</button>
-<button class="control" data-key="down">↓</button>
-<button class="control" data-key="right">→</button>
-</div>
+<div id="app"></div>
 
 </div>
-
 </main>
 
 <script>
-"use strict";
 
-/* ==========================================
-   BASIC DATA
-========================================== */
+const id=new URLSearchParams(location.search).get("game")||"snake";
 
-const params=new URLSearchParams(location.search);
-const gameId=params.get("game")||"rocket";
-
-const names={
- rocket:["🚀 Galaxy Blaster","score"],
- snake:["🐍 Snake","score"],
- time:["⏱️ Perfect Time","time"],
- reaction:["⚡ Reaction Rush","time"],
- memory:["🧠 Memory","score"],
- "2048":["🔢 2048","score"],
- brick:["🧱 Brick Blast","score"],
- ttt:["⭕ Tic-Tac-Toe","score"],
- pong:["🏓 Pong","score"],
- flappy:["🐦 Flappy Sky","score"],
- lights:["💡 Lights Out","score"],
- color:["🎨 Color Match","score"],
- whack:["🔨 Whack Spot","score"],
- connect4:["🟡 Vier Gewinnt","score"],
- simon:["🔊 Simon","score"],
- higher:["🃏 Higher or Lower","score"],
- math:["🧮 Quick Math","score"],
- coin:["🪙 Coin Catch","score"],
- safe:["💣 Safe Tiles","score"],
- dots:["🔵 Connect Dots","score"],
- guess:["🔢 Guess the Number","score"],
- dice:["🎲 Dice Duel","score"],
- odd:["🟣 Odd One Out","score"],
- number:["🔢 Number Sprint","time"],
- hold:["💪 Hold Meter","time"],
- word:["🔤 Word Scramble","score"],
- dodge:["🏐 Dodge Ball","score"],
- runner:["🏃 Neon Runner","score"],
- target:["🎯 Target Shot","score"],
- space:["🌌 Space Blaster","score"],
- basket:["🏀 Basket Shot","score"],
- goal:["⚽ Goal Keeper","score"],
- racer:["🏎️ Lane Racer","score"],
- helicopter:["🚁 Heli Cave","score"],
- fish:["🐟 Fish Dash","score"],
- aim:["🔵 Aim Trainer","score"]
+const titles={
+galaxy:"🚀 Galaxy Blaster",
+snake:"🐍 Snake",
+time:"⏱️ Perfect Time",
+reaction:"⚡ Reaction Rush",
+memory:"🧠 Memory",
+"2048":"🔢 2048",
+brick:"🧱 Brick Blast",
+ttt:"⭕ Tic-Tac-Toe",
+pong:"🏓 Pong",
+flappy:"🐦 Flappy Sky",
+lights:"💡 Lights Out",
+color:"🎨 Color Match",
+whack:"🔨 Whack Spot",
+connect4:"🟡 Vier Gewinnt",
+simon:"🔊 Simon",
+higher:"🃏 Higher or Lower",
+math:"🧮 Quick Math",
+coin:"🪙 Coin Catch",
+safe:"💣 Safe Tiles",
+dots:"🔵 Connect Dots",
+guess:"🔢 Guess the Number",
+dice:"🎲 Dice Duel",
+odd:"🟣 Odd One Out",
+sprint:"🔢 Number Sprint",
+hold:"💪 Hold Meter",
+word:"🔤 Word Scramble",
+aim:"🎯 Aim Trainer",
+racer:"🏎️ Lane Racer",
+heli:"🚁 Heli Cave",
+fish:"🐟 Fish Dash",
+basket:"🏀 Basket Shot",
+keeper:"🥅 Goal Keeper",
+runner:"🏃 Neon Runner"
 };
 
-const info=names[gameId]||names.rocket;
+document.getElementById("title").textContent=titles[id]||"Game";
 
-document.getElementById("title").textContent=info[0];
+const app=document.getElementById("app");
+const scoreEl=document.getElementById("score");
+const infoEl=document.getElementById("info");
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+function score(n){
+scoreEl.textContent="Punkte: "+n;
+}
 
-let W=900,H=600;
+function info(t){
+infoEl.textContent=t;
+}
 
-const keys={
- left:false,
- right:false,
- up:false,
- down:false
+function canvasGame(setup){
+
+app.innerHTML=`
+<canvas id="canvas" width="720" height="480"></canvas>
+<div class="controls">
+<button id="restart">🔄 Neustart</button>
+</div>
+`;
+
+const c=document.getElementById("canvas");
+const x=c.getContext("2d");
+
+document.getElementById("restart").onclick=()=>setup(c,x);
+
+setup(c,x);
+}
+
+function random(n){
+return Math.floor(Math.random()*n);
+}
+
+
+/* SNAKE */
+
+function snake(){
+
+canvasGame((c,x)=>{
+
+let body=[
+{x:10,y:10},
+{x:9,y:10},
+{x:8,y:10}
+];
+
+let dir={x:1,y:0};
+let next={x:1,y:0};
+let food={x:random(30),y:random(20)};
+let points=0;
+let dead=false;
+
+function draw(){
+
+x.fillStyle="#050713";
+x.fillRect(0,0,720,480);
+
+x.fillStyle="#52ed8a";
+
+body.forEach(p=>{
+x.fillRect(p.x*24,p.y*24,22,22);
+});
+
+x.fillStyle="#ffd34d";
+x.fillRect(food.x*24,food.y*24,22,22);
+
+score(points);
+info(dead?"Game Over":"Swipe zum Steuern");
+
+}
+
+function move(){
+
+if(dead)return;
+
+dir=next;
+
+let head={
+x:(body[0].x+dir.x+30)%30,
+y:(body[0].y+dir.y+20)%20
 };
 
-let game=null;
-let animation=0;
-let lastTime=0;
-
-/* ==========================================
-   ACCOUNT / RECORD
-========================================== */
-
-const currentUser=localStorage.getItem("gamegalaxy_current_v1")||"Gast";
-
-function getScores(){
- try{
-   return JSON.parse(localStorage.getItem("gamegalaxy_scores_v1")||"{}");
- }catch{
-   return{};
- }
+if(body.some(p=>p.x===head.x&&p.y===head.y)){
+dead=true;
+draw();
+return;
 }
 
-function saveScores(s){
- localStorage.setItem("gamegalaxy_scores_v1",JSON.stringify(s));
-}
+body.unshift(head);
 
-function recordKey(){
- return currentUser+"|"+gameId;
-}
+if(head.x===food.x&&head.y===food.y){
 
-function getRecord(){
- const s=getScores();
- return s[recordKey()];
-}
+points++;
 
-function displayRecord(){
- const r=getRecord();
-
- if(r===undefined){
-   document.getElementById("record").textContent=
-     currentUser==="Gast"?"Gast-Modus":"Noch kein Rekord";
-   return;
- }
-
- document.getElementById("record").textContent=
-   info[1]==="time"
-   ?"🏆 "+Number(r).toFixed(3)+" s"
-   :"🏆 Bestwert: "+r;
-}
-
-function saveRecord(value){
- const s=getScores();
- const old=s[recordKey()];
-
- if(info[1]==="time"){
-   if(old===undefined||value<old){
-     s[recordKey()]=value;
-     saveScores(s);
-   }
- }else{
-   if(old===undefined||value>old){
-     s[recordKey()]=value;
-     saveScores(s);
-   }
- }
-
- displayRecord();
-}
-
-displayRecord();
-
-/* ==========================================
-   INPUT
-========================================== */
-
-window.addEventListener("keydown",e=>{
- const k=e.key.toLowerCase();
-
- if(k==="arrowleft"||k==="a")keys.left=true;
- if(k==="arrowright"||k==="d")keys.right=true;
- if(k==="arrowup"||k==="w")keys.up=true;
- if(k==="arrowdown"||k==="s")keys.down=true;
-
- if(k===" "){
-   e.preventDefault();
-   if(game&&game.tap)game.tap(W/2,H/2);
- }
-});
-
-window.addEventListener("keyup",e=>{
- const k=e.key.toLowerCase();
-
- if(k==="arrowleft"||k==="a")keys.left=false;
- if(k==="arrowright"||k==="d")keys.right=false;
- if(k==="arrowup"||k==="w")keys.up=false;
- if(k==="arrowdown"||k==="s")keys.down=false;
-});
-
-document.querySelectorAll(".control").forEach(btn=>{
- const key=btn.dataset.key;
-
- const down=e=>{
-   e.preventDefault();
-   keys[key]=true;
-
-   if(game&&game.tap&&key==="up")
-     game.tap(W/2,H/2);
- };
-
- const up=e=>{
-   e.preventDefault();
-   keys[key]=false;
- };
-
- btn.addEventListener("pointerdown",down);
- btn.addEventListener("pointerup",up);
- btn.addEventListener("pointercancel",up);
- btn.addEventListener("pointerleave",up);
-});
-
-/* ==========================================
-   CANVAS TOUCH
-========================================== */
-
-let touchStart=null;
-
-canvas.addEventListener("touchstart",e=>{
- const t=e.changedTouches[0];
- touchStart={x:t.clientX,y:t.clientY};
- e.preventDefault();
-},{passive:false});
-
-canvas.addEventListener("touchend",e=>{
- if(!touchStart)return;
-
- const t=e.changedTouches[0];
- const dx=t.clientX-touchStart.x;
- const dy=t.clientY-touchStart.y;
-
- if(game&&game.swipe){
-   if(Math.max(Math.abs(dx),Math.abs(dy))<25)
-     game.tap?.(W/2,H/2);
-   else if(Math.abs(dx)>Math.abs(dy))
-     game.swipe(dx>0?"right":"left");
-   else
-     game.swipe(dy>0?"down":"up");
- }
-
- touchStart=null;
- e.preventDefault();
-},{passive:false});
-
-canvas.addEventListener("pointerdown",e=>{
- if(game&&game.tap)
-   game.tap(
-     e.offsetX*(W/canvas.clientWidth),
-     e.offsetY*(H/canvas.clientHeight)
-   );
-});
-
-/* ==========================================
-   HELPERS
-========================================== */
-
-function clear(){
- ctx.fillStyle="#050816";
- ctx.fillRect(0,0,W,H);
-}
-
-function text(t,x,y,size=30){
- ctx.fillStyle="#fff";
- ctx.font=`800 ${size}px system-ui`;
- ctx.textAlign="center";
- ctx.fillText(t,x,y);
-}
-
-function hud(score){
- ctx.fillStyle="#fff";
- ctx.font="700 21px system-ui";
- ctx.textAlign="left";
- ctx.fillText("Punkte: "+score,18,30);
-}
-
-function endOverlay(score){
- ctx.fillStyle="#000b";
- ctx.fillRect(0,0,W,H);
- text("GAME OVER",W/2,270,55);
- text("Punkte: "+score,W/2,320,25);
- text("↻ Neustart oben rechts",W/2,365,20);
-}
-
-/* ==========================================
-   ROCKET
-   One bomb first.
-   Then another after a delay.
-   Delay shrinks gradually.
-   Speed increases gradually.
-========================================== */
-
-function Rocket(){
-
- let s={
-   score:0,
-   over:false,
-   x:450,
-   bullets:[],
-   bombs:[],
-   lastShot:0,
-   lastBomb:0,
-   bombInterval:1800,
-   bombSpeed:2.0,
-   elapsed:0
- };
-
- s.restart=function(){
-   this.score=0;
-   this.over=false;
-   this.x=450;
-   this.bullets=[];
-   this.bombs=[];
-   this.lastShot=performance.now();
-   this.lastBomb=performance.now();
-   this.bombInterval=1800;
-   this.bombSpeed=2;
-   this.elapsed=0;
- };
-
- s.update=function(t,dt){
-
-   if(this.over)return;
-
-   this.elapsed+=dt;
-
-   if(keys.left)this.x-=dt*.38;
-   if(keys.right)this.x+=dt*.38;
-
-   this.x=Math.max(30,Math.min(870,this.x));
-
-   /* automatic laser */
-   if(t-this.lastShot>260){
-     this.bullets.push({
-       x:this.x,
-       y:540
-     });
-
-     this.lastShot=t;
-   }
-
-   this.bullets.forEach(b=>b.y-=dt*.65);
-
-   this.bullets=this.bullets.filter(b=>b.y>-20);
-
-   /* controlled bomb spawning */
-   if(t-this.lastBomb>this.bombInterval){
-
-     this.bombs.push({
-       x:40+Math.random()*820,
-       y:-30,
-       r:17,
-       speed:this.bombSpeed
-     });
-
-     this.lastBomb=t;
-
-     /* one comes later than the previous */
-     this.bombInterval=Math.max(
-       480,
-       this.bombInterval-18
-     );
-
-     this.bombSpeed=Math.min(
-       9,
-       this.bombSpeed+0.035
-     );
-   }
-
-   this.bombs.forEach(b=>{
-     b.y+=dt*.06*b.speed;
-   });
-
-   /* laser hits */
-   for(const b of this.bombs){
-     for(const l of this.bullets){
-
-       if(Math.hypot(b.x-l.x,b.y-l.y)<24){
-
-         b.dead=true;
-         l.dead=true;
-         this.score++;
-       }
-     }
-   }
-
-   this.bombs=this.bombs.filter(b=>!b.dead&&b.y<650);
-   this.bullets=this.bullets.filter(b=>!b.dead);
-
-   /* player collision */
-   for(const b of this.bombs){
-     if(Math.hypot(
-       b.x-this.x,
-       b.y-535
-     )<34){
-       this.over=true;
-       saveRecord(this.score);
-       break;
-     }
-   }
- };
-
- s.draw=function(){
-
-   clear();
-   hud(this.score);
-
-   /* stars */
-   ctx.fillStyle="#fff";
-   for(let i=0;i<60;i++){
-     const x=(i*137)%W;
-     const y=(i*83)%H;
-     ctx.fillRect(x,y,2,2);
-   }
-
-   /* ship */
-   ctx.fillStyle="#55dfff";
-   ctx.beginPath();
-   ctx.moveTo(this.x,505);
-   ctx.lineTo(this.x-27,555);
-   ctx.lineTo(this.x+27,555);
-   ctx.closePath();
-   ctx.fill();
-
-   /* lasers */
-   ctx.fillStyle="#fff";
-   this.bullets.forEach(b=>{
-     ctx.fillRect(b.x-2,b.y,4,18);
-   });
-
-   /* bombs */
-   this.bombs.forEach(b=>{
-     ctx.fillStyle="#ff4968";
-     ctx.beginPath();
-     ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-     ctx.fill();
-   });
-
-   if(this.over)
-     endOverlay(this.score);
- };
-
- return s;
-}
-
-/* ==========================================
-   DODGE BALL
-========================================== */
-
-function Dodge(){
-
- let s={
-   score:0,
-   over:false,
-   x:450,
-   y:520,
-   balls:[],
-   lastSpawn:0,
-   speed:2,
-   start:performance.now()
- };
-
- s.restart=function(){
-   this.score=0;
-   this.over=false;
-   this.x=450;
-   this.y=520;
-   this.balls=[];
-   this.lastSpawn=performance.now();
-   this.speed=2;
-   this.start=performance.now();
- };
-
- s.update=function(t,dt){
-
-   if(this.over)return;
-
-   if(keys.left)this.x-=dt*.42;
-   if(keys.right)this.x+=dt*.42;
-   if(keys.up)this.y-=dt*.42;
-   if(keys.down)this.y+=dt*.42;
-
-   this.x=Math.max(20,Math.min(880,this.x));
-   this.y=Math.max(70,Math.min(580,this.y));
-
-   /* continuous gradual speed increase */
-   this.speed=Math.min(
-     10,
-     2+(t-this.start)/30000*4
-   );
-
-   const interval=Math.max(
-     280,
-     1150-this.speed*70
-   );
-
-   if(t-this.lastSpawn>interval){
-
-     this.balls.push({
-       x:20+Math.random()*860,
-       y:-20,
-       r:13+Math.random()*10,
-       speed:this.speed*(.9+Math.random()*.2)
-     });
-
-     this.lastSpawn=t;
-   }
-
-   this.balls.forEach(b=>{
-     b.y+=dt*.06*b.speed;
-   });
-
-   this.balls=this.balls.filter(b=>b.y<650);
-
-   for(const b of this.balls){
-
-     if(Math.hypot(
-       b.x-this.x,
-       b.y-this.y
-     )<b.r+15){
-
-       this.over=true;
-       saveRecord(this.score);
-       break;
-     }
-   }
-
-   this.score=Math.floor(
-     (t-this.start)/200
-   );
- };
-
- s.draw=function(){
-
-   clear();
-   hud(this.score);
-
-   ctx.fillStyle="#55dfff";
-   ctx.beginPath();
-   ctx.arc(this.x,this.y,15,0,Math.PI*2);
-   ctx.fill();
-
-   this.balls.forEach(b=>{
-     ctx.fillStyle="#ff4d6d";
-     ctx.beginPath();
-     ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-     ctx.fill();
-   });
-
-   if(this.over)
-     endOverlay(this.score);
- };
-
- return s;
-}
-
-/* ==========================================
-   SNAKE
-========================================== */
-
-function Snake(){
-
- let s={
-   score:0,
-   over:false,
-   snake:[],
-   food:{x:10,y:8},
-   dir:{x:1,y:0},
-   next:{x:1,y:0},
-   timer:0,
-   delay:105,
-   cols:30,
-   rows:20
- };
-
- s.restart=function(){
-
-   this.score=0;
-   this.over=false;
-
-   this.snake=[
-     {x:10,y:10},
-     {x:9,y:10},
-     {x:8,y:10}
-   ];
-
-   this.dir={x:1,y:0};
-   this.next={x:1,y:0};
-   this.timer=0;
-
-   this.food={
-     x:15,
-     y:8
-   };
- };
-
- function direction(s,d){
-
-   if(d==="up"&&s.dir.y!==1)s.next={x:0,y:-1};
-   if(d==="down"&&s.dir.y!==-1)s.next={x:0,y:1};
-   if(d==="left"&&s.dir.x!==1)s.next={x:-1,y:0};
-   if(d==="right"&&s.dir.x!==-1)s.next={x:1,y:0};
- }
-
- s.swipe=d=>direction(s,d);
-
- s.update=function(t,dt){
-
-   if(this.over)return;
-
-   if(keys.up)direction(this,"up");
-   if(keys.down)direction(this,"down");
-   if(keys.left)direction(this,"left");
-   if(keys.right)direction(this,"right");
-
-   this.timer+=dt;
-
-   if(this.timer<this.delay)return;
-
-   this.timer=0;
-   this.dir=this.next;
-
-   const head=this.snake[0];
-
-   const next={
-     x:(head.x+this.dir.x+this.cols)%this.cols,
-     y:(head.y+this.dir.y+this.rows)%this.rows
-   };
-
-   if(this.snake.some(p=>p.x===next.x&&p.y===next.y)){
-     this.over=true;
-     saveRecord(this.score);
-     return;
-   }
-
-   this.snake.unshift(next);
-
-   if(next.x===this.food.x&&next.y===this.food.y){
-
-     this.score++;
-
-     do{
-       this.food={
-         x:Math.floor(Math.random()*this.cols),
-         y:Math.floor(Math.random()*this.rows)
-       };
-     }while(
-       this.snake.some(p=>
-         p.x===this.food.x&&p.y===this.food.y
-       )
-     );
-
-   }else{
-     this.snake.pop();
-   }
- };
-
- s.draw=function(){
-
-   clear();
-   hud(this.score);
-
-   for(const p of this.snake){
-
-     ctx.fillStyle="#38e58a";
-
-     ctx.fillRect(
-       p.x*30+2,
-       p.y*30+62,
-       26,
-       26
-     );
-   }
-
-   ctx.fillStyle="#ffd34d";
-
-   ctx.fillRect(
-     this.food.x*30+3,
-     this.food.y*30+63,
-     24,
-     24
-   );
-
-   if(this.over)
-     endOverlay(this.score);
- };
-
- return s;
-}
-
-/* ==========================================
-   BRICK BLAST
-========================================== */
-
-function Brick(){
-
- let s={
-   score:0,
-   over:false,
-   paddle:450,
-   ball:{
-     x:450,
-     y:520,
-     vx:4,
-     vy:-4
-   },
-   blocks:[]
- };
-
- s.restart=function(){
-
-   this.score=0;
-   this.over=false;
-   this.paddle=450;
-
-   this.ball={
-     x:450,
-     y:520,
-     vx:4,
-     vy:-4
-   };
-
-   this.blocks=[];
-
-   for(let r=0;r<5;r++){
-     for(let c=0;c<10;c++){
-
-       this.blocks.push({
-         x:75+c*75,
-         y:70+r*32,
-         w:68,
-         h:24,
-         alive:true
-       });
-
-     }
-   }
- };
-
- s.tap=function(x){
-   this.paddle=x;
- };
-
- s.update=function(t,dt){
-
-   if(this.over)return;
-
-   if(keys.left)this.paddle-=dt*.5;
-   if(keys.right)this.paddle+=dt*.5;
-
-   this.paddle=Math.max(
-     70,
-     Math.min(830,this.paddle)
-   );
-
-   const b=this.ball;
-
-   b.x+=b.vx*dt/16;
-   b.y+=b.vy*dt/16;
-
-   if(b.x<8||b.x>892)b.vx*=-1;
-   if(b.y<45)b.vy=Math.abs(b.vy);
-
-   if(
-     b.y>550&&
-     b.y<580&&
-     Math.abs(b.x-this.paddle)<80
-   ){
-     b.vy=-Math.abs(b.vy);
-   }
-
-   for(const q of this.blocks){
-
-     if(!q.alive)continue;
-
-     const hit=
-       b.x>q.x&&
-       b.x<q.x+q.w&&
-       b.y>q.y&&
-       b.y<q.y+q.h;
-
-     if(hit){
-
-       q.alive=false;
-       b.vy*=-1;
-       this.score++;
-
-       break;
-     }
-   }
-
-   if(b.y>620){
-     this.over=true;
-     saveRecord(this.score);
-   }
-
-   if(this.blocks.every(q=>!q.alive)){
-     this.over=true;
-     saveRecord(this.score);
-   }
- };
-
- s.draw=function(){
-
-   clear();
-   hud(this.score);
-
-   ctx.fillStyle="#fff";
-   ctx.fillRect(
-     this.paddle-70,
-     570,
-     140,
-     12
-   );
-
-   this.blocks.forEach(q=>{
-
-     if(!q.alive)return;
-
-     ctx.fillStyle="#5964ff";
-
-     ctx.fillRect(
-       q.x,
-       q.y,
-       q.w,
-       q.h
-     );
-   });
-
-   ctx.fillStyle="#ffd45b";
-
-   ctx.beginPath();
-   ctx.arc(
-     this.ball.x,
-     this.ball.y,
-     8,
-     0,
-     Math.PI*2
-   );
-   ctx.fill();
-
-   if(this.over)
-     endOverlay(this.score);
- };
-
- return s;
-}
-
-/* ==========================================
-   PERFECT TIME
-========================================== */
-
-function PerfectTime(){
-
- let s={
-   running:false,
-   start:0,
-   elapsed:0,
-   finished:false
- };
-
- s.restart=function(){
-   this.running=false;
-   this.start=0;
-   this.elapsed=0;
-   this.finished=false;
- };
-
- s.tap=function(){
-
-   const now=performance.now();
-
-   if(!this.running&&!this.finished){
-
-     this.running=true;
-     this.start=now;
-     return;
-   }
-
-   if(this.running){
-
-     this.elapsed=now-this.start;
-     this.running=false;
-     this.finished=true;
-
-     saveRecord(this.elapsed/1000);
-   }
- };
-
- s.update=function(t){
-   if(this.running)
-     this.elapsed=t-this.start;
- };
-
- s.draw=function(){
-
-   clear();
-
-   text(
-     (this.elapsed/1000).toFixed(3)+" s",
-     W/2,
-     275,
-     70
-   );
-
-   text(
-     this.running
-       ?"STOPPEN"
-       :"TIPPE ZUM STARTEN / STOPPEN",
-     W/2,
-     340,
-     23
-   );
- };
-
- return s;
-}
-
-/* ==========================================
-   REACTION
-========================================== */
-
-function Reaction(){
-
- let s={
-   state:"waiting",
-   target:0,
-   result:null
- };
-
- s.restart=function(){
-   this.state="waiting";
-   this.result=null;
-   this.target=performance.now()+1200+Math.random()*2600;
- };
-
- s.tap=function(){
-
-   const now=performance.now();
-
-   if(this.state==="waiting"){
-     this.state="ready";
-     return;
-   }
-
-   if(this.state==="ready"){
-
-     if(now<this.target){
-       this.result=-1;
-     }else{
-       this.result=now-this.target;
-       saveRecord(this.result/1000);
-     }
-
-     this.state="done";
-   }
- };
-
- s.update=function(t){
-
-   if(
-     this.state==="ready"&&
-     t>=this.target
-   ){
-     this.state="green";
-   }
- };
-
- s.draw=function(){
-
-   if(this.state==="green"){
-     ctx.fillStyle="#159447";
-   }else{
-     ctx.fillStyle="#171d30";
-   }
-
-   ctx.fillRect(0,0,W,H);
-
-   if(this.state==="waiting")
-     text("WARTE…",W/2,280,55);
-
-   if(this.state==="ready")
-     text("NOCH NICHT!",W/2,280,45);
-
-   if(this.state==="green")
-     text("JETZT!",W/2,280,65);
-
-   if(this.state==="done"){
-
-     text(
-       this.result<0
-       ?"ZU FRÜH!"
-       :this.result.toFixed(0)+" ms",
-       W/2,
-       280,
-       55
-     );
-   }
-
-   text(
-     "Tippen",
-     W/2,
-     350,
-     22
-   );
- };
-
- return s;
-}
-
-/* ==========================================
-   GENERIC ARCADE GAMES
-========================================== */
-
-function Generic(){
-
- let s={
-   score:0,
-   over:false,
-   x:450,
-   y:500,
-   objects:[],
-   last:0,
-   speed:2,
-   start:performance.now()
- };
-
- s.restart=function(){
-
-   this.score=0;
-   this.over=false;
-   this.x=450;
-   this.y=500;
-   this.objects=[];
-   this.last=performance.now();
-   this.speed=2;
-   this.start=performance.now();
- };
-
- s.tap=function(x,y){
-   this.x=x;
-   this.y=y;
- };
-
- s.update=function(t,dt){
-
-   if(this.over)return;
-
-   if(keys.left)this.x-=dt*.4;
-   if(keys.right)this.x+=dt*.4;
-   if(keys.up)this.y-=dt*.4;
-   if(keys.down)this.y+=dt*.4;
-
-   this.x=Math.max(20,Math.min(880,this.x));
-   this.y=Math.max(70,Math.min(580,this.y));
-
-   this.speed=Math.min(
-     10,
-     2+(t-this.start)/35000*5
-   );
-
-   if(t-this.last>
-      Math.max(300,1000-this.speed*60)){
-
-     this.objects.push({
-       x:20+Math.random()*860,
-       y:-25,
-       r:12+Math.random()*15,
-       v:this.speed
-     });
-
-     this.last=t;
-   }
-
-   this.objects.forEach(o=>{
-     o.y+=dt*.06*o.v;
-   });
-
-   this.objects=this.objects.filter(o=>o.y<640);
-
-   for(const o of this.objects){
-
-     if(
-       Math.hypot(
-         o.x-this.x,
-         o.y-this.y
-       )<o.r+15
-     ){
-
-       this.over=true;
-       saveRecord(this.score);
-       break;
-     }
-   }
-
-   this.score=Math.floor(
-     (t-this.start)/200
-   );
- };
-
- s.draw=function(){
-
-   clear();
-   hud(this.score);
-
-   ctx.fillStyle="#54ddff";
-   ctx.beginPath();
-   ctx.arc(this.x,this.y,15,0,Math.PI*2);
-   ctx.fill();
-
-   this.objects.forEach(o=>{
-     ctx.fillStyle="#ff4e6d";
-     ctx.beginPath();
-     ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
-     ctx.fill();
-   });
-
-   if(this.over)
-     endOverlay(this.score);
- };
-
- return s;
-}
-
-/* ==========================================
-   GAME SELECTION
-========================================== */
-
-function createGame(id){
-
- if(id==="rocket")return new Rocket();
- if(id==="dodge")return new Dodge();
- if(id==="snake")return new Snake();
- if(id==="brick")return new Brick();
- if(id==="time")return new PerfectTime();
- if(id==="reaction")return new Reaction();
-
- /*
-   The remaining games use the common
-   arcade engine for now. This keeps the
-   portal stable instead of duplicating
-   hundreds of lines of collision code.
- */
- return new Generic();
-}
-
-/* ==========================================
-   LOOP
-========================================== */
-
-function start(){
-
- cancelAnimationFrame(animation);
-
- game=createGame(gameId);
-
- if(game.restart)
-   game.restart();
-
- lastTime=performance.now();
-
- function loop(t){
-
-   const dt=Math.min(
-     40,
-     t-lastTime
-   );
-
-   lastTime=t;
-
-   if(game.update)
-     game.update(t,dt);
-
-   if(game.draw)
-     game.draw();
-
-   animation=requestAnimationFrame(loop);
- }
-
- animation=requestAnimationFrame(loop);
-}
-
-document.getElementById("restart").onclick=()=>{
- if(game&&game.restart){
-   game.restart();
-   displayRecord();
- }
+food={
+x:random(30),
+y:random(20)
 };
 
-document.getElementById("home").onclick=()=>{
- location.href="index.html";
+}else{
+
+body.pop();
+
+}
+
+draw();
+
+}
+
+window.onkeydown=e=>{
+
+if(e.key==="ArrowUp"&&dir.y===0)
+next={x:0,y:-1};
+
+if(e.key==="ArrowDown"&&dir.y===0)
+next={x:0,y:1};
+
+if(e.key==="ArrowLeft"&&dir.x===0)
+next={x:-1,y:0};
+
+if(e.key==="ArrowRight"&&dir.x===0)
+next={x:1,y:0};
+
 };
 
-start();
+let sx=0,sy=0;
+
+c.ontouchstart=e=>{
+sx=e.touches[0].clientX;
+sy=e.touches[0].clientY;
+};
+
+c.ontouchend=e=>{
+
+let dx=e.changedTouches[0].clientX-sx;
+let dy=e.changedTouches[0].clientY-sy;
+
+if(Math.abs(dx)>Math.abs(dy)){
+
+if(dx>0&&dir.x===0)next={x:1,y:0};
+if(dx<0&&dir.x===0)next={x:-1,y:0};
+
+}else{
+
+if(dy>0&&dir.y===0)next={x:0,y:1};
+if(dy<0&&dir.y===0)next={x:0,y:-1};
+
+}
+
+};
+
+draw();
+
+setInterval(move,110);
+
+});
+
+}
+
+
+/* GALAXY BLASTER */
+
+function galaxy(){
+
+canvasGame((c,x)=>{
+
+let player=360;
+let bullets=[];
+let bombs=[];
+let points=0;
+let lastShot=0;
+let lastBomb=0;
+let start=performance.now();
+let over=false;
+
+function controlLeft(){
+player-=18;
+}
+
+function controlRight(){
+player+=18;
+}
+
+window.onkeydown=e=>{
+if(e.key==="ArrowLeft")controlLeft();
+if(e.key==="ArrowRight")controlRight();
+};
+
+c.ontouchmove=e=>{
+
+let r=c.getBoundingClientRect();
+
+player=
+(e.touches[0].clientX-r.left)/r.width*720;
+
+};
+
+function frame(t){
+
+if(over)return;
+
+player=Math.max(25,Math.min(695,player));
+
+if(t-lastShot>240){
+
+bullets.push({
+x:player,
+y:430
+});
+
+lastShot=t;
+}
+
+let gap=Math.max(
+600,
+1800-(t-start)/40
+);
+
+if(t-lastBomb>gap){
+
+bombs.push({
+x:30+random(660),
+y:-20,
+speed:2+(t-start)/150000
+});
+
+lastBomb=t;
+
+}
+
+bullets.forEach(b=>b.y-=8);
+bombs.forEach(b=>b.y+=b.speed);
+
+for(let b of bombs){
+
+for(let s of bullets){
+
+if(
+Math.abs(b.x-s.x)<16&&
+Math.abs(b.y-s.y)<20
+){
+
+b.y=9999;
+s.y=-9999;
+points++;
+
+}
+
+}
+
+}
+
+bombs=bombs.filter(b=>b.y<500);
+bullets=bullets.filter(b=>b.y>0);
+
+if(
+bombs.some(b=>
+Math.abs(b.x-player)<25&&
+b.y>405
+)
+){
+
+over=true;
+
+}
+
+x.fillStyle="#050713";
+x.fillRect(0,0,720,480);
+
+x.fillStyle="#62aaff";
+
+x.beginPath();
+x.moveTo(player,415);
+x.lineTo(player-23,455);
+x.lineTo(player+23,455);
+x.closePath();
+x.fill();
+
+x.fillStyle="#ffe04d";
+
+bullets.forEach(b=>{
+x.fillRect(b.x-3,b.y,6,15);
+});
+
+x.fillStyle="#ff536d";
+
+bombs.forEach(b=>{
+x.beginPath();
+x.arc(b.x,b.y,13,0,Math.PI*2);
+x.fill();
+});
+
+score(points);
+info(over?"💥 Getroffen!":"Automatisches Schießen");
+
+if(!over)
+requestAnimationFrame(frame);
+
+}
+
+requestAnimationFrame(frame);
+
+});
+
+}
+
+
+/* PERFECT TIME */
+
+function timeGame(){
+
+app.innerHTML=`
+<div class="big" id="clock">0.000</div>
+
+<div class="controls">
+<button id="start">▶ Start</button>
+<button id="stop">⏹ Stop</button>
+<button id="reset">🔄 Reset</button>
+</div>
+
+<div class="msg">
+Ziel: genau 10.000 Sekunden
+</div>
+`;
+
+let clock=document.getElementById("clock");
+let running=false;
+let value=0;
+let base=0;
+let animation;
+
+function update(){
+
+if(running){
+
+value=(performance.now()-base)/1000;
+
+clock.textContent=value.toFixed(3);
+
+animation=requestAnimationFrame(update);
+
+}
+
+}
+
+document.getElementById("start").onclick=()=>{
+
+if(!running){
+
+base=performance.now()-value*1000;
+running=true;
+update();
+
+}
+
+};
+
+document.getElementById("stop").onclick=()=>{
+running=false;
+cancelAnimationFrame(animation);
+};
+
+document.getElementById("reset").onclick=()=>{
+running=false;
+value=0;
+clock.textContent="0.000";
+};
+
+}
+
+
+/* REACTION */
+
+function reaction(){
+
+app.innerHTML=`
+<div class="big" id="reaction">Drücke Start</div>
+<div class="controls">
+<button id="reactionStart">Start</button>
+</div>
+`;
+
+let box=document.getElementById("reaction");
+let startTime=0;
+let timer;
+
+document.getElementById("reactionStart").onclick=()=>{
+
+clearTimeout(timer);
+
+box.textContent="Warte...";
+box.className="big bad";
+
+startTime=0;
+
+timer=setTimeout(()=>{
+
+startTime=performance.now();
+
+box.textContent="JETZT!";
+box.className="big good";
+
+},1000+Math.random()*2500);
+
+};
+
+box.onclick=()=>{
+
+if(startTime){
+
+let result=Math.round(performance.now()-startTime);
+
+box.textContent=result+" ms";
+
+startTime=0;
+
+}
+
+};
+
+}
+
+
+/* MEMORY */
+
+function memory(){
+
+let cards=[
+1,1,2,2,3,3,4,4,
+5,5,6,6,7,7,8,8
+];
+
+cards.sort(()=>Math.random()-.5);
+
+app.innerHTML=
+`<div id="memory" class="grid g4"></div>`;
+
+let board=document.getElementById("memory");
+let opened=[];
+let solved=0;
+
+cards.forEach(value=>{
+
+let b=document.createElement("button");
+
+b.className="tile";
+b.textContent="❓";
+
+b.onclick=()=>{
+
+if(b.dataset.done||opened.length>=2)
+return;
+
+b.textContent=value;
+
+opened.push({
+button:b,
+value:value
+});
+
+if(opened.length===2){
+
+if(opened[0].value===opened[1].value){
+
+opened[0].button.dataset.done="1";
+opened[1].button.dataset.done="1";
+
+opened=[];
+solved++;
+
+if(solved===8)
+info("🎉 Gewonnen!");
+
+}else{
+
+setTimeout(()=>{
+
+opened.forEach(o=>{
+o.button.textContent="❓";
+});
+
+opened=[];
+
+},600);
+
+}
+
+}
+
+};
+
+board.appendChild(b);
+
+});
+
+}
+
+
+/* 2048 */
+
+function game2048(){
+
+let board=Array(16).fill(0);
+
+function add(){
+
+let free=board
+.map((v,i)=>v===0?i:null)
+.filter(v=>v!==null);
+
+if(free.length)
+board[free[random(free.length)]]=2;
+
+}
+
+add();
+add();
+
+app.innerHTML=`
+<div id="board2048" class="grid g4"></div>
+
+<div class="controls">
+<button data-dir="up">⬆️</button>
+<button data-dir="left">⬅️</button>
+<button data-dir="down">⬇️</button>
+<button data-dir="right">➡️</button>
+</div>
+`;
+
+let grid=document.getElementById("board2048");
+
+function draw(){
+
+grid.innerHTML="";
+
+board.forEach(v=>{
+
+let b=document.createElement("div");
+
+b.className="tile";
+
+b.textContent=v||"";
+
+grid.appendChild(b);
+
+});
+
+}
+
+function move(direction){
+
+let lines=[];
+
+for(let r=0;r<4;r++){
+
+let line=[];
+
+for(let c=0;c<4;c++){
+
+let index=
+direction==="left"||direction==="right"
+?r*4+c
+:c*4+r;
+
+line.push(board[index]);
+
+}
+
+if(direction==="right"||direction==="down")
+line.reverse();
+
+line=line.filter(Boolean);
+
+for(let i=0;i<line.length-1;i++){
+
+if(line[i]===line[i+1]){
+
+line[i]*=2;
+line.splice(i+1,1);
+
+}
+
+}
+
+while(line.length<4)
+line.push(0);
+
+if(direction==="right"||direction==="down")
+line.reverse();
+
+for(let c=0;c<4;c++){
+
+let index=
+direction==="left"||direction==="right"
+?r*4+c
+:c*4+r;
+
+board[index]=line[c];
+
+}
+
+}
+
+add();
+draw();
+
+}
+
+document.querySelectorAll("[data-dir]").forEach(button=>{
+button.onclick=()=>move(button.dataset.dir);
+});
+
+draw();
+
+}
+
+
+/* TIC TAC TOE MIT KI */
+
+function ttt(){
+
+let board=Array(9).fill("");
+
+app.innerHTML=`
+<div id="ttt" class="grid g3"></div>
+<div class="msg" id="tttMessage"></div>
+<button id="tttReset">🔄 Neu</button>
+`;
+
+let grid=document.getElementById("ttt");
+let message=document.getElementById("tttMessage");
+
+function winner(b){
+
+const lines=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+for(const line of lines){
+
+let[a,b1,c]=line;
+
+if(
+b[a] &&
+b[a]===b[b1] &&
+b[a]===b[c]
+)
+return b[a];
+
+}
+
+if(b.every(Boolean))
+return "draw";
+
+return null;
+
+}
+
+function minimax(b,maximizing){
+
+let result=winner(b);
+
+if(result==="O")return 10;
+if(result==="X")return -10;
+if(result==="draw")return 0;
+
+if(maximizing){
+
+let best=-Infinity;
+
+for(let i=0;i<9;i++){
+
+if(!b[i]){
+
+b[i]="O";
+
+best=Math.max(
+best,
+minimax(b,false)
+);
+
+b[i]="";
+
+}
+
+}
+
+return best;
+
+}else{
+
+let best=Infinity;
+
+for(let i=0;i<9;i++){
+
+if(!b[i]){
+
+b[i]="X";
+
+best=Math.min(
+best,
+minimax(b,true)
+);
+
+b[i]="";
+
+}
+
+}
+
+return best;
+
+}
+
+}
+
+function aiMove(){
+
+let best=-Infinity;
+let move=-1;
+
+for(let i=0;i<9;i++){
+
+if(!board[i]){
+
+board[i]="O";
+
+let value=minimax(board,false);
+
+board[i]="";
+
+if(value>best){
+
+best=value;
+move=i;
+
+}
+
+}
+
+}
+
+if(move>=0)
+board[move]="O";
+
+}
+
+function draw(){
+
+grid.innerHTML="";
+
+board.forEach((value,index)=>{
+
+let b=document.createElement("button");
+
+b.className="tile";
+b.textContent=value;
+
+b.onclick=()=>{
+
+if(board[index]||winner(board))
+return;
+
+board[index]="X";
+
+if(!winner(board))
+aiMove();
+
+draw();
+
+};
+
+grid.appendChild(b);
+
+});
+
+let result=winner(board);
+
+message.textContent=
+result
+?result==="draw"
+?"Unentschieden!"
+:result==="X"
+?"🎉 Du gewinnst!"
+:"🤖 Die KI gewinnt!"
+:"Du bist X • KI ist O";
+
+}
+
+document.getElementById("tttReset").onclick=()=>{
+board=Array(9).fill("");
+draw();
+};
+
+draw();
+
+}
+
+
+/* COLOR MATCH */
+
+function colorMatch(){
+
+const colors=["🔴","🟢","🔵","🟡","🟣"];
+
+let target=0;
+let points=0;
+
+app.innerHTML=`
+<div class="big" id="colorTarget"></div>
+
+<div class="controls">
+${colors.map((c,i)=>`<button id="color${i}">${c}</button>`).join("")}
+</div>
+`;
+
+let targetBox=document.getElementById("colorTarget");
+
+function next(){
+
+target=random(colors.length);
+
+targetBox.textContent=colors[target];
+
+score(points);
+
+}
+
+colors.forEach((c,i)=>{
+
+document.getElementById("color"+i).onclick=()=>{
+
+if(i===target)
+points++;
+else
+points=Math.max(0,points-1);
+
+next();
+
+};
+
+});
+
+next();
+
+}
+
+
+/* WHACK */
+
+function whack(){
+
+app.innerHTML=
+`<div id="whack" class="grid g3"></div>`;
+
+let grid=document.getElementById("whack");
+let points=0;
+
+for(let i=0;i<9;i++){
+
+let b=document.createElement("button");
+
+b.className="tile";
+
+b.onclick=()=>{
+
+if(b.textContent==="🎯"){
+
+points++;
+score(points);
+b.textContent="";
+
+}
+
+};
+
+grid.appendChild(b);
+
+}
+
+function target(){
+
+grid.querySelectorAll("button")
+.forEach(b=>b.textContent="");
+
+grid.children[random(9)].textContent="🎯";
+
+}
+
+target();
+
+setInterval(target,700);
+
+}
+
+
+/* QUICK MATH */
+
+function mathGame(){
+
+let a,b,answer,points=0;
+
+app.innerHTML=`
+<div class="big" id="question"></div>
+<input id="answer" type="number">
+<div class="controls">
+<button id="check">Antwort</button>
+</div>
+`;
+
+let question=document.getElementById("question");
+let input=document.getElementById("answer");
+
+function next(){
+
+a=random(20)+1;
+b=random(20)+1;
+answer=a+b;
+
+question.textContent=a+" + "+b+" = ?";
+input.value="";
+
+score(points);
+
+}
+
+document.getElementById("check").onclick=()=>{
+
+if(Number(input.value)===answer)
+points++;
+else
+points=Math.max(0,points-1);
+
+next();
+
+};
+
+next();
+
+}
+
+
+/* GUESS NUMBER */
+
+function guess(){
+
+let number=random(100)+1;
+let tries=0;
+
+app.innerHTML=`
+<input id="guessInput" type="number" placeholder="1–100">
+<div class="controls">
+<button id="guessButton">Raten</button>
+</div>
+<div id="guessMessage" class="msg"></div>
+`;
+
+let input=document.getElementById("guessInput");
+let msg=document.getElementById("guessMessage");
+
+document.getElementById("guessButton").onclick=()=>{
+
+let value=Number(input.value);
+
+tries++;
+
+if(value===number){
+
+msg.textContent=
+"🎉 Richtig! Versuche: "+tries;
+
+number=random(100)+1;
+tries=0;
+
+}else if(value<number){
+
+msg.textContent="⬆️ Zu klein";
+
+}else{
+
+msg.textContent="⬇️ Zu groß";
+
+}
+
+};
+
+}
+
+
+/* DICE */
+
+function dice(){
+
+app.innerHTML=`
+<div class="big" id="diceDisplay">🎲</div>
+<div class="controls">
+<button id="diceButton">Würfeln</button>
+</div>
+<div id="diceMessage" class="msg"></div>
+`;
+
+document.getElementById("diceButton").onclick=()=>{
+
+let a=random(6)+1;
+let b=random(6)+1;
+
+document.getElementById("diceDisplay")
+.textContent=a+" : "+b;
+
+document.getElementById("diceMessage")
+.textContent=
+a>b
+?"🎉 Du gewinnst!"
+:a<b
+?"🤖 Computer gewinnt!"
+:"Unentschieden!";
+
+};
+
+}
+
+
+/* HIGHER LOWER */
+
+function higher(){
+
+let current=random(13)+1;
+let next=random(13)+1;
+let points=0;
+
+app.innerHTML=`
+<div class="big" id="cards"></div>
+
+<div class="controls">
+<button id="higher">⬆ Höher</button>
+<button id="lower">⬇ Niedriger</button>
+</div>
+`;
+
+let display=document.getElementById("cards");
+
+function draw(){
+
+display.textContent=current+" → ?";
+
+score(points);
+
+}
+
+function play(higherChoice){
+
+let old=next;
+
+next=random(13)+1;
+
+let correct=
+higherChoice
+?next>old
+:next<old;
+
+if(correct)
+points++;
+else
+points=Math.max(0,points-1);
+
+current=old;
+
+draw();
+
+}
+
+document.getElementById("higher")
+.onclick=()=>play(true);
+
+document.getElementById("lower")
+.onclick=()=>play(false);
+
+draw();
+
+}
+
+
+/* ODD ONE OUT */
+
+function odd(){
+
+app.innerHTML=
+`<div id="odd" class="grid g4"></div>`;
+
+let grid=document.getElementById("odd");
+let points=0;
+
+function draw(){
+
+grid.innerHTML="";
+
+let special=random(16);
+
+for(let i=0;i<16;i++){
+
+let b=document.createElement("button");
+
+b.className="tile";
+
+b.textContent=
+i===special
+?"🔵"
+:"🔷";
+
+b.onclick=()=>{
+
+if(i===special){
+
+points++;
+score(points);
+draw();
+
+}
+
+};
+
+grid.appendChild(b);
+
+}
+
+}
+
+draw();
+
+}
+
+
+/* NUMBER SPRINT */
+
+function sprint(){
+
+app.innerHTML=`
+<div class="big" id="sprintNumber">1</div>
+<button id="sprintButton">Start</button>
+`;
+
+let number=1;
+let start=0;
+
+document.getElementById("sprintButton").onclick=()=>{
+
+number=1;
+start=performance.now();
+
+document.getElementById("sprintNumber").textContent=number;
+
+};
+
+document.getElementById("sprintNumber").onclick=()=>{
+
+if(!start)return;
+
+number++;
+
+document.getElementById("sprintNumber").textContent=number;
+
+if(number>20){
+
+info(
+Math.round(performance.now()-start)+" ms"
+);
+
+start=0;
+
+}
+
+};
+
+}
+
+
+/* HOLD METER */
+
+function hold(){
+
+app.innerHTML=`
+<div class="big" id="holdText">Halte!</div>
+
+<div class="controls">
+<button id="holdButton">
+GEDRÜCKT HALTEN
+</button>
+</div>
+`;
+
+let start=0;
+
+const button=document.getElementById("holdButton");
+const text=document.getElementById("holdText");
+
+button.onpointerdown=()=>{
+start=performance.now();
+};
+
+button.onpointerup=()=>{
+
+if(!start)return;
+
+let time=(performance.now()-start)/1000;
+
+text.textContent=time.toFixed(2)+" Sekunden";
+
+start=0;
+
+};
+
+button.onpointercancel=button.onpointerup;
+
+}
+
+
+/* WORD SCRAMBLE */
+
+function word(){
+
+const words=[
+"GALAXY",
+"ROCKET",
+"SNAKE",
+"MEMORY",
+"BRICK",
+"YUSUF",
+"CREATOR"
+];
+
+let word=words[random(words.length)];
+
+app.innerHTML=`
+<div class="big" id="scrambled"></div>
+
+<input id="wordInput" placeholder="Deine Antwort">
+
+<div class="controls">
+<button id="wordCheck">Prüfen</button>
+</div>
+`;
+
+let display=document.getElementById("scrambled");
+let input=document.getElementById("wordInput");
+
+function newWord(){
+
+word=words[random(words.length)];
+
+display.textContent=
+word.split("")
+.sort(()=>Math.random()-.5)
+.join(" ");
+
+}
+
+document.getElementById("wordCheck").onclick=()=>{
+
+if(input.value.toUpperCase()===word){
+
+info("🎉 Richtig!");
+
+input.value="";
+
+newWord();
+
+}else{
+
+info("❌ Noch nicht");
+
+}
+
+};
+
+newWord();
+
+}
+
+
+/* CONNECT DOTS */
+
+function dots(){
+
+const count=12;
+
+app.innerHTML=
+`<div id="dots" class="grid g4"></div>`;
+
+let grid=document.getElementById("dots");
+let numbers=[...Array(count)].map((_,i)=>i+1);
+
+numbers.sort(()=>Math.random()-.5);
+
+let next=1;
+
+numbers.forEach(n=>{
+
+let b=document.createElement("button");
+
+b.className="tile";
+b.textContent=n;
+
+b.onclick=()=>{
+
+if(n===next){
+
+b.disabled=true;
+next++;
+
+score(next-1);
+
+if(next>count)
+info("🎉 Geschafft!");
+
+}
+
+};
+
+grid.appendChild(b);
+
+});
+
+}
+
+
+/* AIM TRAINER */
+
+function aim(){
+
+canvasGame((c,x)=>{
+
+let target={
+x:100+random(520),
+y:80+random(320)
+};
+
+let points=0;
+
+c.onclick=e=>{
+
+let r=c.getBoundingClientRect();
+
+let mx=(e.clientX-r.left)/r.width*720;
+let my=(e.clientY-r.top)/r.height*480;
+
+if(
+Math.hypot(mx-target.x,my-target.y)<35
+){
+
+points++;
+
+target={
+x:30+random(660),
+y:30+random(420)
+};
+
+}
+
+};
+
+function draw(){
+
+x.fillStyle="#050713";
+x.fillRect(0,0,720,480);
+
+x.fillStyle="#ff4f70";
+
+x.beginPath();
+x.arc(target.x,target.y,25,0,Math.PI*2);
+x.fill();
+
+score(points);
+
+requestAnimationFrame(draw);
+
+}
+
+draw();
+
+});
+
+}
+
+
+/* PONG */
+
+function pong(){
+
+canvasGame((c,x)=>{
+
+let paddle=180;
+let ballX=360;
+let ballY=240;
+let vx=4;
+let vy=3;
+let points=0;
+
+c.ontouchmove=e=>{
+
+let r=c.getBoundingClientRect();
+
+paddle=
+(e.touches[0].clientY-r.top)/r.height*480-55;
+
+};
+
+window.onmousemove=e=>{
+
+let r=c.getBoundingClientRect();
+
+paddle=
+(e.clientY-r.top)/r.height*480-55;
+
+};
+
+function draw(){
+
+paddle=Math.max(0,Math.min(370,paddle));
+
+ballX+=vx;
+ballY+=vy;
+
+if(ballY<10||ballY>470)
+vy*=-1;
+
+if(
+ballX>670&&
+ballY>paddle&&
+ballY<paddle+110
+)
+vx=-Math.abs(vx);
+
+if(ballX<0){
+
+points++;
+
+ballX=360;
+ballY=240;
+
+}
+
+x.fillStyle="#050713";
+x.fillRect(0,0,720,480);
+
+x.fillStyle="white";
+
+x.fillRect(690,paddle,15,110);
+
+x.beginPath();
+x.arc(ballX,ballY,9,0,Math.PI*2);
+x.fill();
+
+score(points);
+
+requestAnimationFrame(draw);
+
+}
+
+draw();
+
+});
+
+}
+
+
+/* LIGHTS OUT */
+
+function lights(){
+
+let cells=
+Array(25)
+.fill(0)
+.map(()=>random(2));
+
+app.innerHTML=
+`<div id="lights" class="grid g5"></div>`;
+
+let grid=document.getElementById("lights");
+
+function draw(){
+
+grid.innerHTML="";
+
+cells.forEach((value,index)=>{
+
+let b=document.createElement("button");
+
+b.className="tile";
+
+b.textContent=value?"💡":"";
+
+b.style.opacity=value?".95":".25";
+
+b.onclick=()=>{
+
+let positions=[
+index,
+index-1,
+index+1,
+index-5,
+index+5
+];
+
+positions.forEach(p=>{
+
+if(p<0||p>=25)return;
+
+if(index%5===0&&p===index-1)return;
+if(index%5===4&&p===index+1)return;
+
+cells[p]^=1;
+
+});
+
+draw();
+
+if(cells.every(v=>v===0))
+info("🎉 Alles aus!");
+
+};
+
+grid.appendChild(b);
+
+});
+
+}
+
+draw();
+
+}
+
+
+/* SAFE TILES */
+
+function safe(){
+
+let bombs=new Set();
+
+for(let i=0;i<25;i++){
+
+if(Math.random()<.2)
+bombs.add(i);
+
+}
+
+app.innerHTML=
+`<div id="safe" class="grid g5"></div>`;
+
+let grid=document.getElementById("safe");
+let points=0;
+
+for(let i=0;i<25;i++){
+
+let b=document.createElement("button");
+
+b.className="tile";
+b.textContent="⬜";
+
+b.onclick=()=>{
+
+if(bombs.has(i)){
+
+b.textContent="💥";
+info("Boom! Neuer Versuch.");
+points=0;
+score(points);
+
+}else{
+
+b.textContent="🟩";
+points++;
+score(points);
+
+}
+
+};
+
+grid.appendChild(b);
+
+}
+
+}
+
+
+/* SIMPLE ACTION GAMES */
+
+function actionGame(name){
+
+canvasGame((c,x)=>{
+
+let playerY=240;
+let velocity=0;
+let obstacles=[];
+let points=0;
+let frame=0;
+let over=false;
+
+function jump(){
+velocity=-7;
+}
+
+c.ontouchstart=jump;
+
+window.onkeydown=e=>{
+if(e.key===" "||e.key==="ArrowUp")
+jump();
+};
+
+function draw(){
+
+if(over)return;
+
+frame++;
+
+velocity+=.28;
+playerY+=velocity;
+
+if(frame%80===0){
+
+obstacles.push({
+x:720,
+gap:150+random(180)
+});
+
+}
+
+obstacles.forEach(o=>o.x-=4);
+
+obstacles=obstacles.filter(o=>o.x>-50);
+
+if(
+playerY<0||
+playerY>480||
+obstacles.some(o=>
+o.x<100&&
+o.x>40&&
+(
+playerY<o.gap-65||
+playerY>o.gap+65
+)
+)
+){
+
+over=true;
+info("💥 Game Over – Neustart");
+
+}
+
+x.fillStyle="#050713";
+x.fillRect(0,0,720,480);
+
+x.fillStyle="#5dbbff";
+
+x.beginPath();
+x.arc(90,playerY,18,0,Math.PI*2);
+x.fill();
+
+x.fillStyle="#55e38a";
+
+obstacles.forEach(o=>{
+
+x.fillRect(o.x,0,40,o.gap-65);
+
+x.fillRect(
+o.x,
+o.gap+65,
+40,
+480
+);
+
+});
+
+score(points);
+
+if(!over)
+requestAnimationFrame(draw);
+
+}
+
+draw();
+
+});
+
+}
+
+
+/* GAME ROUTER */
+
+const games={
+
+snake,
+galaxy,
+time:timeGame,
+reaction,
+memory,
+"2048":game2048,
+ttt,
+color:colorMatch,
+whack,
+math:mathGame,
+guess,
+dice,
+higher,
+odd,
+sprint,
+hold,
+word,
+dots,
+aim,
+pong,
+lights,
+safe
+
+};
+
+if(games[id]){
+
+games[id]();
+
+}else{
+
+actionGame(id);
+
+}
+
 </script>
 
 </body>
