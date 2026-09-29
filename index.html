@@ -2,229 +2,285 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080b18">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GameGalaxy</title>
 
 <style>
-*{box-sizing:border-box}
-body{
- margin:0;
- color:#fff;
- background:#070a14;
- font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
-}
-button,input{font:inherit}
-button{cursor:pointer}
-header{
- position:sticky;
- top:0;
- z-index:20;
- background:#080b16ee;
- backdrop-filter:blur(15px);
- border-bottom:1px solid #ffffff14
-}
-.nav{
- max-width:1400px;
- margin:auto;
- padding:13px 18px;
- display:flex;
- align-items:center;
- gap:14px
-}
-.logo{
- font-size:25px;
- font-weight:900;
- white-space:nowrap
-}
-.logo span{color:#55dfff}
-.search{
- flex:1;
- min-width:100px;
- padding:11px 14px;
- border-radius:13px;
- border:1px solid #ffffff18;
- background:#141a2d;
- color:#fff;
- outline:0
-}
-.user{
- padding:10px 13px;
- border-radius:12px;
- border:1px solid #ffffff18;
- background:#151d34;
- color:#fff
-}
-.hero{
- max-width:1400px;
- margin:auto;
- padding:42px 18px 20px
-}
-.hero h1{
- font-size:clamp(38px,6vw,72px);
- line-height:.95;
- margin:0 0 15px
-}
-.hero p{
- color:#aab4d0;
- max-width:750px;
- line-height:1.6
-}
-.categories{
- display:flex;
- gap:8px;
- overflow-x:auto;
- padding:5px 0 12px
-}
-.cat{
- border:1px solid #ffffff18;
- background:#12182a;
- color:#dce3ff;
- border-radius:999px;
- padding:8px 14px;
- white-space:nowrap
-}
-.cat.active{
- background:#6557ff;
- border-color:#6557ff
-}
-main{
- max-width:1400px;
- margin:auto;
- padding:0 18px 50px
-}
-.heading{
- display:flex;
- justify-content:space-between;
- align-items:center;
- margin:20px 0 13px
-}
-.heading h2{margin:0}
-.muted{color:#8d98b7;font-size:13px}
-.grid{
- display:grid;
- grid-template-columns:repeat(4,minmax(0,1fr));
- gap:14px
-}
-.card{
- overflow:hidden;
- border-radius:18px;
- background:#11172a;
- border:1px solid #ffffff10;
- transition:.15s
-}
-.card:hover{
- transform:translateY(-3px);
- border-color:#6557ff99
-}
-.art{
- height:125px;
- display:grid;
- place-items:center;
- font-size:48px
-}
-.body{padding:12px}
-.title{font-weight:800;font-size:17px}
-.desc{
- color:#9ba6c3;
- font-size:12px;
- margin-top:4px;
- min-height:34px
-}
-.play{
- width:100%;
- margin-top:10px;
- border:0;
- padding:9px;
- border-radius:11px;
- background:#fff;
- color:#080b16;
- font-weight:800
-}
-.empty{
- text-align:center;
- padding:50px;
- color:#8995b5;
- display:none
-}
-footer{
- max-width:1400px;
- margin:auto;
- padding:20px 18px 70px;
- color:#707c9b;
- font-size:12px
+* {
+    box-sizing: border-box;
 }
 
-/* Login */
-.modal{
- position:fixed;
- inset:0;
- z-index:100;
- display:none;
- place-items:center;
- padding:18px;
- background:#02040bf2
-}
-.modal.show{display:grid}
-.box{
- width:min(430px,100%);
- background:#11172a;
- border:1px solid #ffffff18;
- border-radius:22px;
- padding:25px;
- box-shadow:0 30px 100px #000
-}
-.box h2{margin-top:0}
-.box input{
- width:100%;
- margin:6px 0;
- padding:12px;
- border-radius:11px;
- border:1px solid #ffffff18;
- background:#080c19;
- color:#fff;
- outline:0
-}
-.primary{
- width:100%;
- margin-top:10px;
- border:0;
- border-radius:11px;
- padding:12px;
- background:#6557ff;
- color:#fff;
- font-weight:800
-}
-.secondary{
- width:100%;
- margin-top:8px;
- border:1px solid #ffffff18;
- border-radius:11px;
- padding:11px;
- background:#181f35;
- color:#fff
-}
-.error{color:#ff6c83;font-size:13px;min-height:20px}
-.stats{
- margin-top:15px;
- padding:13px;
- background:#0a0f1e;
- border-radius:12px;
- color:#aab5d2
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: white;
+    background:
+        radial-gradient(circle at top, #29306b, #090b18 55%);
 }
 
-@media(max-width:950px){
- .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 15px;
+    background: rgba(8,10,25,.92);
+    border-bottom: 1px solid #30365c;
+    backdrop-filter: blur(12px);
 }
-@media(max-width:680px){
- .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
- .logo{font-size:20px}
- .user{font-size:13px;padding:9px}
- .art{height:105px;font-size:38px}
+
+.nav {
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
-@media(max-width:390px){
- .grid{grid-template-columns:1fr}
- .art{height:130px}
+
+.logo {
+    font-size: 25px;
+    font-weight: 900;
+    margin-right: auto;
+}
+
+.logo span {
+    color: #7d8cff;
+}
+
+#search {
+    width: 230px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #3b4270;
+    background: #151932;
+    color: white;
+}
+
+button {
+    border: 0;
+    border-radius: 12px;
+    padding: 11px 15px;
+    background: #6977ff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+main {
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 14px 60px;
+}
+
+.hero {
+    padding: 30px;
+    border-radius: 25px;
+    border: 1px solid #343b6b;
+    background: linear-gradient(135deg,#20275a,#11152d);
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    margin: 0 0 10px;
+    font-size: clamp(35px,7vw,65px);
+}
+
+.hero p {
+    color: #b9bfdc;
+}
+
+.section {
+    margin: 25px 0 12px;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.games {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 14px;
+}
+
+@media (min-width:700px) {
+    .games {
+        grid-template-columns: repeat(3,1fr);
+    }
+}
+
+@media (min-width:1050px) {
+    .games {
+        grid-template-columns: repeat(4,1fr);
+    }
+}
+
+.game {
+    min-height: 175px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid #30375e;
+    background: linear-gradient(145deg,#171b39,#0d1022);
+    text-decoration: none;
+    color: white;
+    transition: .18s;
+}
+
+.game:hover {
+    transform: translateY(-4px);
+    border-color: #7885ff;
+}
+
+.icon {
+    font-size: 42px;
+    margin-bottom: 20px;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.description {
+    margin-top: 5px;
+    color: #969fbe;
+    font-size: 13px;
+}
+
+footer {
+    text-align: center;
+    padding: 30px 10px;
+    color: #9299b8;
+    font-weight: bold;
+}
+
+/* SECRET EFFECTS */
+
+#effects {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.shake {
+    animation: shake .6s;
+}
+
+@keyframes shake {
+    0%,100% { transform: translate(0); }
+    20% { transform: translate(12px,-8px); }
+    40% { transform: translate(-12px,8px); }
+    60% { transform: translate(8px,5px); }
+    80% { transform: translate(-7px,-5px); }
+}
+
+.secret-number {
+    position: absolute;
+    bottom: -100px;
+    font-size: 90px;
+    font-weight: 1000;
+    animation: rise 3s forwards;
+}
+
+@keyframes rise {
+    to {
+        bottom: 110%;
+        transform: rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.razor {
+    position: absolute;
+    bottom: -150px;
+    left: 50%;
+    font-size: 120px;
+    animation: razor 2.5s forwards;
+}
+
+@keyframes razor {
+    to {
+        bottom: 110%;
+        transform: translateX(-50%) rotate(15deg);
+        opacity: 0;
+    }
+}
+
+.tnt {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 120px;
+    animation: explosion 1.2s forwards;
+}
+
+@keyframes explosion {
+    0% {
+        transform: translate(-50%,-50%) scale(.3);
+    }
+    50% {
+        transform: translate(-50%,-50%) scale(1);
+    }
+    100% {
+        transform: translate(-50%,-50%) scale(5);
+        opacity: 0;
+    }
+}
+
+.neon {
+    position: absolute;
+    font-size: 60px;
+    animation: neon 2.5s forwards;
+}
+
+@keyframes neon {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.pixel {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: white;
+    animation: pixel 1.5s forwards;
+}
+
+@keyframes pixel {
+    to {
+        transform: translateY(100vh) rotate(500deg);
+        opacity: 0;
+    }
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0,0,0,.75);
+}
+
+.modal.show {
+    display: grid;
+}
+
+.modal-box {
+    width: min(520px,100%);
+    padding: 25px;
+    border-radius: 22px;
+    background: #11152d;
+    border: 1px solid #3b4474;
+}
+
+.codes {
+    line-height: 1.9;
+    color: #d1d5eb;
 }
 </style>
 </head>
@@ -233,302 +289,398 @@ footer{
 
 <header>
 <div class="nav">
-<div class="logo">🎮 Game<span>Galaxy</span></div>
-<input id="search" class="search" placeholder="Spiel suchen …">
-<button id="userButton" class="user">👤 Anmelden</button>
+
+<div class="logo">
+🎮 Game<span>Galaxy</span>
+</div>
+
+<input id="search" placeholder="Spiele suchen...">
+
+<button id="secretButton">
+🔐 Secrets
+</button>
+
 </div>
 </header>
 
+<main>
+
 <section class="hero">
-<h1>Deine Browser-<span style="color:#6557ff">Arcade.</span></h1>
+<h1>GameGalaxy 🚀</h1>
 <p>
-Spiele direkt im Browser. Keine Downloads. Deine persönlichen Bestwerte
-werden auf diesem Gerät gespeichert.
+Kostenlose Browser-Games für iPad, Handy und Computer.
 </p>
-<div id="categories" class="categories"></div>
 </section>
 
-<main>
-<div class="heading">
-<h2>🔥 Spiele</h2>
-<span id="count" class="muted"></span>
+<div class="section">
+🎮 Alle Spiele
 </div>
 
-<div id="grid" class="grid"></div>
-<div id="empty" class="empty">Kein Spiel gefunden.</div>
+<div id="games" class="games"></div>
+
 </main>
 
 <footer>
-GameGalaxy • Läuft direkt im Browser • iPad • Smartphone • Computer
+Yusuf 7d Creator
 </footer>
 
-<!-- LOGIN -->
-<div id="loginModal" class="modal">
-<div class="box">
+<div id="effects"></div>
 
-<h2 id="loginTitle">👤 Anmelden</h2>
+<div id="modal" class="modal">
 
-<input id="nameInput" placeholder="Name">
-<input id="passwordInput" type="password" placeholder="Passwort">
+<div class="modal-box">
 
-<div id="loginError" class="error"></div>
+<h2>🔐 GameGalaxy Secret Codes</h2>
 
-<button id="loginButton" class="primary">Anmelden</button>
-<button id="newAccountButton" class="secondary">Neuen Account erstellen</button>
-<button id="cancelLogin" class="secondary">Abbrechen</button>
+<div class="codes">
 
-<div id="accountStats" class="stats"></div>
+<b>6 7</b><br>
+→ 6- und 7-Effekt mit Bildschirmshake
+
+<br>
+
+<b>low taper fade</b><br>
+→ Eine Rasierklinge fliegt über den Bildschirm
+
+<br>
+
+<b>minecraft</b><br>
+→ TNT erscheint und explodiert
+
+<br>
+
+<b>galaxyghost</b><br>
+→ Geistermodus
+
+<br>
+
+<b>neonparty</b><br>
+→ Neon-Konfetti
+
+<br>
+
+<b>pixelstorm</b><br>
+→ Pixelsturm
+
+<br>
+
+<b>moonwalk</b><br>
+→ Schwebe-/Mond-Effekt
+
+<br>
+
+<b>rainbow</b><br>
+→ Regenbogen-Effekt
+
+<br>
+
+<b>indiebox</b><br>
+→ Öffnet die Indie-Games-Ecke
+
+<br>
+
+<b>yusufcreater</b><br>
+→ Zeigt diese gesamte Liste
+
+</div>
+
+<br>
+
+<button id="closeModal">
+Schließen
+</button>
 
 </div>
 </div>
 
 <script>
-"use strict";
 
-/* -----------------------------
-   GAME DATABASE
------------------------------ */
+const games = [
 
-const games=[
-["rocket","🚀","Galaxy Blaster","Arcade","Automatisch schießen und immer schnelleren Bomben ausweichen."],
-["snake","🐍","Snake","Arcade","Futter sammeln. Der Rand wickelt sich um."],
-["time","⏱️","Perfect Time","Time","Stoppe die Zeit so genau wie möglich."],
-["reaction","⚡","Reaction Rush","Time","Reagiere so schnell wie möglich."],
-["memory","🧠","Memory","Puzzle","Finde alle Kartenpaare."],
-["2048","🔢","2048","Puzzle","Verbinde gleiche Zahlen."],
-["brick","🧱","Brick Blast","Arcade","Zerstöre die Blöcke."],
-["ttt","⭕","Tic-Tac-Toe","Classic","Spiele gegen den Computer."],
-["pong","🏓","Pong","Classic","Halte den Ball vom Rand fern."],
-["flappy","🐦","Flappy Sky","Arcade","Fliege durch die Lücken."],
-["lights","💡","Lights Out","Puzzle","Schalte alle Lichter aus."],
-["color","🎨","Color Match","Puzzle","Finde die andere Farbe."],
-["whack","🔨","Whack Spot","Arcade","Treffe den Punkt."],
-["connect4","🟡","Vier Gewinnt","Classic","Verbinde vier Steine."],
-["simon","🔊","Simon","Puzzle","Merke dir die Reihenfolge."],
-["higher","🃏","Higher or Lower","Casual","Rate die nächste Karte."],
-["math","🧮","Quick Math","Puzzle","Löse Aufgaben schnell."],
-["coin","🪙","Coin Catch","Arcade","Fange Münzen."],
-["safe","💣","Safe Tiles","Puzzle","Finde sichere Felder."],
-["dots","🔵","Connect Dots","Puzzle","Verbinde die Punkte."],
-["guess","🔢","Guess the Number","Casual","Finde die geheime Zahl."],
-["dice","🎲","Dice Duel","Casual","Würfle gegen den Computer."],
-["odd","🟣","Odd One Out","Puzzle","Finde das ungewöhnliche Feld."],
-["number","🔢","Number Sprint","Time","Tippe Zahlen in der richtigen Reihenfolge."],
-["hold","💪","Hold Meter","Time","Halte so lange wie möglich."],
-["word","🔤","Word Scramble","Puzzle","Entwirre die Wörter."],
-["dodge","🏐","Dodge Ball","Arcade","Weiche immer schnelleren Bällen aus."],
-["runner","🏃","Neon Runner","Runner","Springe über Hindernisse."],
-["target","🎯","Target Shot","Arcade","Triff möglichst viele Ziele."],
-["space","🌌","Space Blaster","Arcade","Zerstöre Asteroiden."],
-["basket","🏀","Basket Shot","Sports","Triff den Korb."],
-["goal","⚽","Goal Keeper","Sports","Halte Schüsse."],
-["racer","🏎️","Lane Racer","Racing","Weiche Autos aus."],
-["helicopter","🚁","Heli Cave","Arcade","Halte den Hubschrauber."],
-["fish","🐟","Fish Dash","Arcade","Schwimme durch Hindernisse."],
-["aim","🔵","Aim Trainer","Arcade","Treffe bewegliche Ziele."]
+["🚀","Galaxy Blaster","Automatisch schießen","galaxy"],
+["🐍","Snake","Swipe + Wand-Wrap","snake"],
+["⏱️","Perfect Time","Stoppe genau bei 10 Sekunden","time"],
+["⚡","Reaction Rush","Teste deine Reaktion","reaction"],
+["🧠","Memory","Finde alle Paare","memory"],
+["🔢","2048","Kombiniere Zahlen","2048"],
+["🧱","Brick Blast","Zerstöre die Blöcke","brick"],
+["⭕","Tic-Tac-Toe","Spiele gegen eine KI","ttt"],
+["🏓","Pong","Klassisches Pong","pong"],
+["🐦","Flappy Sky","Fliege durch die Lücken","flappy"],
+["💡","Lights Out","Schalte alle Lichter aus","lights"],
+["🎨","Color Match","Finde die richtige Farbe","color"],
+["🔨","Whack Spot","Treffe den Punkt","whack"],
+["🟡","Vier Gewinnt","Verbinde vier","connect4"],
+["🔊","Simon","Merke dir die Reihenfolge","simon"],
+["🃏","Higher or Lower","Höher oder niedriger?","higher"],
+["🧮","Quick Math","Rechne schnell","math"],
+["🪙","Coin Catch","Fange Münzen","coin"],
+["💣","Safe Tiles","Vermeide Bomben","safe"],
+["🔵","Connect Dots","Klicke die Zahlen","dots"],
+["🔢","Guess the Number","Errate die Zahl","guess"],
+["🎲","Dice Duel","Würfelduell","dice"],
+["🟣","Odd One Out","Finde das andere Feld","odd"],
+["🔢","Number Sprint","Klicke schnell","sprint"],
+["💪","Hold Meter","Halte den Button","hold"],
+["🔤","Word Scramble","Entwirre Wörter","word"],
+["🎯","Aim Trainer","Treffe Ziele","aim"],
+["🏎️","Lane Racer","Weiche Hindernissen aus","racer"],
+["🚁","Heli Cave","Bleib in der Luft","heli"],
+["🐟","Fish Dash","Sammle Fische","fish"],
+["🏀","Basket Shot","Treffe den Korb","basket"],
+["🥅","Goal Keeper","Halte die Schüsse","keeper"],
+["🏃","Neon Runner","Springe über Hindernisse","runner"]
+
 ];
 
-/* -----------------------------
-   ACCOUNT
------------------------------ */
+const container = document.getElementById("games");
 
-const ACCOUNT_KEY="gamegalaxy_accounts_v1";
-const CURRENT_KEY="gamegalaxy_current_v1";
-const SCORE_KEY="gamegalaxy_scores_v1";
+function render(search="") {
 
-function accounts(){
- try{return JSON.parse(localStorage.getItem(ACCOUNT_KEY)||"{}")}
- catch{return{}}
-}
+container.innerHTML="";
 
-function saveAccounts(a){
- localStorage.setItem(ACCOUNT_KEY,JSON.stringify(a));
-}
+games
+.filter(game =>
+(game[1]+" "+game[2])
+.toLowerCase()
+.includes(search.toLowerCase())
+)
+.forEach(game => {
 
-function currentUser(){
- return localStorage.getItem(CURRENT_KEY)||"";
-}
+const a = document.createElement("a");
 
-function scores(){
- try{return JSON.parse(localStorage.getItem(SCORE_KEY)||"{}")}
- catch{return{}}
-}
+a.className="game";
 
-function saveScores(s){
- localStorage.setItem(SCORE_KEY,JSON.stringify(s));
-}
+a.href =
+"game.html?game="+encodeURIComponent(game[3]);
 
-const loginModal=document.getElementById("loginModal");
-const loginTitle=document.getElementById("loginTitle");
-const nameInput=document.getElementById("nameInput");
-const passwordInput=document.getElementById("passwordInput");
-const loginError=document.getElementById("loginError");
-const accountStats=document.getElementById("accountStats");
-let createMode=false;
+a.innerHTML = `
+<div class="icon">${game[0]}</div>
+<div class="name">${game[1]}</div>
+<div class="description">${game[2]}</div>
+`;
 
-function updateUserButton(){
- const u=currentUser();
- document.getElementById("userButton").textContent=u?"👤 "+u:"👤 Anmelden";
-}
+container.appendChild(a);
 
-function openLogin(create=false){
- createMode=create;
- loginTitle.textContent=create?"🆕 Neuer Account":"👤 Anmelden";
- document.getElementById("loginButton").textContent=create?"Account erstellen":"Anmelden";
- nameInput.value="";
- passwordInput.value="";
- loginError.textContent="";
- accountStats.textContent="";
- loginModal.classList.add("show");
-}
-
-function closeLogin(){
- loginModal.classList.remove("show");
-}
-
-function accountAction(){
- const name=nameInput.value.trim();
- const password=passwordInput.value;
-
- if(name.length<2){
-   loginError.textContent="Bitte mindestens 2 Zeichen für den Namen verwenden.";
-   return;
- }
-
- if(password.length<4){
-   loginError.textContent="Das Passwort muss mindestens 4 Zeichen haben.";
-   return;
- }
-
- const a=accounts();
-
- if(createMode){
-   if(a[name]){
-     loginError.textContent="Dieser Name existiert bereits.";
-     return;
-   }
-
-   a[name]={password:password,created:Date.now()};
-   saveAccounts(a);
-   localStorage.setItem(CURRENT_KEY,name);
-   closeLogin();
-   updateUserButton();
- }else{
-   if(!a[name]||a[name].password!==password){
-     loginError.textContent="Name oder Passwort ist falsch.";
-     return;
-   }
-
-   localStorage.setItem(CURRENT_KEY,name);
-   closeLogin();
-   updateUserButton();
- }
-}
-
-document.getElementById("userButton").onclick=()=>{
- const u=currentUser();
-
- if(u){
-   const s=scores();
-   let n=0;
-   Object.keys(s).forEach(k=>{
-     if(k.startsWith(u+"|")) n++;
-   });
-
-   accountStats.textContent="Angemeldet als "+u+" • gespeicherte Rekorde: "+n;
-   createMode=false;
-   loginTitle.textContent="👤 "+u;
-   nameInput.value=u;
-   passwordInput.value="";
-   loginError.textContent="";
-   document.getElementById("loginButton").textContent="Abmelden";
-   loginModal.classList.add("show");
-
-   document.getElementById("loginButton").onclick=()=>{
-     localStorage.removeItem(CURRENT_KEY);
-     closeLogin();
-     updateUserButton();
-   };
- }else{
-   document.getElementById("loginButton").onclick=accountAction;
-   openLogin(false);
- }
-};
-
-document.getElementById("newAccountButton").onclick=()=>{
- document.getElementById("loginButton").onclick=accountAction;
- openLogin(true);
-};
-
-document.getElementById("cancelLogin").onclick=closeLogin;
-
-/* -----------------------------
-   GAME LIST
------------------------------ */
-
-const grid=document.getElementById("grid");
-const search=document.getElementById("search");
-const count=document.getElementById("count");
-const empty=document.getElementById("empty");
-const categories=document.getElementById("categories");
-
-let category="Alle";
-
-const cats=["Alle","Arcade","Puzzle","Time","Classic","Casual","Sports","Racing","Runner"];
-
-cats.forEach(c=>{
- const b=document.createElement("button");
- b.className="cat"+(c==="Alle"?" active":"");
- b.textContent=c;
-
- b.onclick=()=>{
-   category=c;
-   document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));
-   b.classList.add("active");
-   render();
- };
-
- categories.appendChild(b);
 });
 
-function render(){
- const q=search.value.toLowerCase().trim();
-
- const list=games.filter(g=>{
-   const categoryOK=category==="Alle"||g[3]===category;
-   const text=(g[1]+" "+g[2]+" "+g[3]+" "+g[4]).toLowerCase();
-   return categoryOK&&text.includes(q);
- });
-
- grid.innerHTML="";
- count.textContent=list.length+" Spiele";
- empty.style.display=list.length?"none":"block";
-
- list.forEach(g=>{
-   const card=document.createElement("article");
-   card.className="card";
-
-   card.innerHTML=`
-   <div class="art" style="background:linear-gradient(135deg,#151c48,#30236b)">
-      ${g[1]}
-   </div>
-   <div class="body">
-      <div class="title">${g[2]}</div>
-      <div class="desc">${g[4]}</div>
-      <button class="play">▶ Spielen</button>
-   </div>`;
-
-   card.querySelector(".play").onclick=()=>{
-     window.location.href="game.html?game="+encodeURIComponent(g[0]);
-   };
-
-   grid.appendChild(card);
- });
 }
 
-search.addEventListener("input",render);
-updateUserButton();
 render();
+
+document.getElementById("search")
+.addEventListener("input",e=>{
+render(e.target.value);
+});
+
+
+/* SECRET SYSTEM */
+
+const effects =
+document.getElementById("effects");
+
+function secret(code) {
+
+effects.innerHTML="";
+
+if(code==="67") {
+
+document.body.classList.add("shake");
+
+for(let i=0;i<16;i++) {
+
+const el=document.createElement("div");
+
+el.className="secret-number";
+
+el.textContent=i%2===0?"6":"7";
+
+el.style.left=(Math.random()*90)+"%";
+
+el.style.animationDelay=(i*.08)+"s";
+
+effects.appendChild(el);
+
+}
+
+setTimeout(()=>{
+document.body.classList.remove("shake");
+},700);
+
+}
+
+if(code==="low taper fade") {
+
+const el=document.createElement("div");
+
+el.className="razor";
+
+el.textContent="🪒";
+
+effects.appendChild(el);
+
+}
+
+if(code==="minecraft") {
+
+const el=document.createElement("div");
+
+el.className="tnt";
+
+el.textContent="🧨";
+
+effects.appendChild(el);
+
+}
+
+if(code==="neonparty") {
+
+for(let i=0;i<35;i++) {
+
+const el=document.createElement("div");
+
+el.className="neon";
+
+el.textContent=["⭐","💜","💙","💚","💛","❤️"][Math.floor(Math.random()*6)];
+
+el.style.left=Math.random()*100+"%";
+el.style.top="-50px";
+el.style.animationDelay=Math.random()+"s";
+
+effects.appendChild(el);
+
+}
+
+}
+
+if(code==="pixelstorm") {
+
+for(let i=0;i<70;i++) {
+
+const el=document.createElement("div");
+
+el.className="pixel";
+
+el.style.left=Math.random()*100+"%";
+el.style.top="-20px";
+el.style.animationDelay=Math.random()+"s";
+
+effects.appendChild(el);
+
+}
+
+}
+
+if(code==="moonwalk") {
+
+const el=document.createElement("div");
+
+el.className="neon";
+el.textContent="🌙";
+
+el.style.left="50%";
+el.style.top="30%";
+
+effects.appendChild(el);
+
+}
+
+if(code==="rainbow") {
+
+document.body.animate(
+[
+{filter:"hue-rotate(0deg)"},
+{filter:"hue-rotate(360deg)"}
+],
+{duration:2500}
+);
+
+}
+
+if(code==="galaxyghost") {
+
+document.body.animate(
+[
+{opacity:1},
+{opacity:.35},
+{opacity:1}
+],
+{duration:1800,iterations:3}
+);
+
+}
+
+if(code==="indiebox") {
+
+alert(
+"🎁 INDIE BOX\n\n"+
+"Hier kommen später besondere Indie-Games hinein!"
+);
+
+}
+
+setTimeout(()=>{
+effects.innerHTML="";
+},4000);
+
+}
+
+
+let typed="";
+
+document.addEventListener("keydown",e=>{
+
+if(e.key.length!==1) return;
+
+typed=(typed+e.key.toLowerCase()).slice(-40);
+
+const codes=[
+"6 7",
+"low taper fade",
+"minecraft",
+"galaxyghost",
+"neonparty",
+"pixelstorm",
+"moonwalk",
+"rainbow",
+"indiebox"
+];
+
+for(const code of codes) {
+
+if(typed.endsWith(code)) {
+
+secret(code);
+typed="";
+
+}
+
+}
+
+if(typed.endsWith("yusufcreater")) {
+
+document.getElementById("modal")
+.classList.add("show");
+
+typed="";
+
+}
+
+});
+
+
+document.getElementById("secretButton")
+.onclick=()=>{
+document.getElementById("modal")
+.classList.add("show");
+};
+
+document.getElementById("closeModal")
+.onclick=()=>{
+document.getElementById("modal")
+.classList.remove("show");
+};
+
 </script>
 
 </body>
