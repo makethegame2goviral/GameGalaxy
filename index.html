@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="de">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#070b14">
@@ -60,6 +61,14 @@ if(code==='indiebox'){layer.innerHTML='<div class="indieBox">📦<br><span style
 $('search').addEventListener('keydown',e=>{if(e.key==='Enter'&&activateCode(e.target.value)){e.target.select();return}if(e.key==='Enter')render()});$('search').addEventListener('input',render);
 $('loginBtn').onclick=authModal;$('leaderBtn').onclick=allLeaderboard;$('secretBtn').onclick=showCodes;$('rainbowBtn').onclick=()=>secretVisual('rainbow');$('playLast').onclick=()=>go(localStorage.getItem('gg_last')||'galaxy');
 setHero();render();refreshAuth();
+  // ===== GameGalaxy Online-Rangliste =====
+const SUPABASE_URL = "https://qvxnacgnuocnhuagpqpf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LQjkI1OC7fUIHnYslwX3MQ_xpkXtwEg";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 </script>
 </body>
 </html>
