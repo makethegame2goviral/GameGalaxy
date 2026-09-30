@@ -34,6 +34,12 @@ main{max-width:1180px;margin:auto;padding:28px 16px 70px}
 table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #23314f;text-align:left}.rank{color:#ffd75a;font-weight:800}
 #toast{position:fixed;z-index:200;bottom:22px;left:50%;transform:translateX(-50%) translateY(15px);opacity:0;pointer-events:none;background:#0d162b;border:1px solid #46608f;padding:12px 17px;border-radius:999px;transition:.2s;box-shadow:0 12px 40px #0009}.toastOn{opacity:1!important;transform:translateX(-50%) translateY(0)!important}
 @media(max-width:700px){.grid2{grid-template-columns:1fr}.hero{padding:30px 20px}.game{min-height:140px}.nav{align-items:flex-start;flex-direction:column}}
+
+.touchPad{display:none;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:8px auto 2px;max-width:330px}
+.touchPad button{width:64px;height:52px;font-size:22px;touch-action:none;user-select:none;-webkit-user-select:none}
+.touchPad .wide{width:135px}
+@media(max-width:800px),(pointer:coarse){.touchPad{display:flex}.controls button{min-height:48px}.game{cursor:pointer}}
+
 </style>
 </head>
 <body>
@@ -53,7 +59,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px s
 <section id="gameArea" class="panel">
 <div class="gameTop"><div><h2 id="title"></h2><div id="instruction" class="muted"></div></div><div><button onclick="back()">← Zurück</button><button onclick="start(current)">↻ Neustart</button><button onclick="leaderboard(current)">🏆</button></div></div>
 <div class="scorebar"><div class="stat"><small>SCORE</small><strong id="score">0</strong></div><div class="stat"><small>BEST</small><strong id="best">0</strong></div><div class="stat"><small>ZEIT</small><strong id="time">—</strong></div></div>
-<canvas id="gameCanvas" width="900" height="560"></canvas><div id="controls" class="controls"></div><div id="hint" class="hint"></div>
+<canvas id="gameCanvas" width="900" height="560"></canvas><div id="controls" class="controls"></div><div id="touchPad" class="touchPad"></div><div id="hint" class="hint"></div>
 </section>
 
 <section class="panel"><div class="sectionHead"><div><h2>🔐 Secret Codes</h2><div class="muted">Versteckte Effekte für deine Arcade.</div></div></div><div style="display:flex;gap:9px"><input id="code" placeholder="Secret Code"><button class="primary" onclick="useCode()">Aktivieren</button></div><div id="codeOut" class="muted" style="margin-top:12px"></div></section>
@@ -75,7 +81,7 @@ const c=document.getElementById("gameCanvas"),x=c.getContext("2d");
 function toast(s){let t=document.getElementById("toast");t.textContent=s;t.classList.add("toastOn");clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove("toastOn"),2200)}
 function go(id){document.getElementById(id).scrollIntoView({behavior:"smooth"})}
 function closeM(id){document.getElementById(id).style.display="none"}
-function clear(){cancelAnimationFrame(raf);clearInterval(window.clock);c.onclick=null;document.onkeydown=null;document.onmousemove=null;document.ontouchstart=null;document.ontouchmove=null;document.ontouchend=null}
+function clear(){cancelAnimationFrame(raf);clearInterval(window.clock);c.onclick=null;document.onkeydown=null;document.onmousemove=null;document.ontouchstart=null;document.ontouchmove=null;document.ontouchend=null;const pad=document.getElementById("touchPad");if(pad){pad.innerHTML="";pad.style.display="none"}}
 function setS(v){score=Math.max(0,Math.floor(v));document.getElementById("score").textContent=score}
 function add(v){setS(score+v)}
 function finish(v=score){if(finished)return;finished=true;clear();setS(v);if(score>best){best=score;localStorage.setItem("ggbest_"+current,best);document.getElementById("best").textContent=best}save(score);toast("🏁 "+score+" Punkte!")}
@@ -85,7 +91,59 @@ function escape(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","
 function render(filter="all"){document.getElementById("gameList").innerHTML=games.filter(g=>filter==="all"||g[4]===filter).map(g=>`<div class="game" style="--accent:${["#53d9ff","#ff4f86","#ffd75a","#7b68ff"][g[4].length%4]}" onclick="start('${g[0]}')"><span class="icon">${g[1]}</span><span class="best">BEST ${localStorage.getItem("ggbest_"+g[0])||0}</span><b>${g[2]}</b><span class="tag">${g[3]}</span></div>`).join("")}
 function filterGames(f,b){document.querySelectorAll(".filters button").forEach(x=>x.classList.remove("active"));b.classList.add("active");render(f)}
 function back(){clear();document.getElementById("gameArea").style.display="none";document.getElementById("games").style.display="block";go("games")}
-function start(id){current=id;finished=false;clear();state={};let g=games.find(a=>a[0]===id);document.getElementById("games").style.display="none";document.getElementById("gameArea").style.display="block";document.getElementById("title").textContent=g[1]+" "+g[2];document.getElementById("instruction").textContent=g[3];score=0;best=+localStorage.getItem("ggbest_"+id)||0;document.getElementById("score").textContent=0;document.getElementById("best").textContent=best;document.getElementById("time").textContent="—";document.getElementById("controls").innerHTML="";document.getElementById("hint").textContent="";go("gameArea");window["g_"+id]()}
+
+function touchButton(label,fn,cls=""){
+  return `<button class="${cls}" onpointerdown="event.preventDefault();(${fn})()">${label}</button>`;
+}
+function showTouch(type){
+  const pad=document.getElementById("touchPad");
+  if(!pad)return;
+  pad.innerHTML="";
+  pad.style.display="flex";
+  const key=k=>`window.pressKey('${k}')`;
+  if(["snake","laneracer"].includes(type)){
+    pad.innerHTML=
+      touchButton("◀",()=>window.pressKey("ArrowLeft"))+
+      touchButton("▲",()=>window.pressKey("ArrowUp"))+
+      touchButton("▼",()=>window.pressKey("ArrowDown"))+
+      touchButton("▶",()=>window.pressKey("ArrowRight"));
+  }else if(["flappy","helicave","neonrunner"].includes(type)){
+    pad.innerHTML=touchButton("⬆ SPRINGEN / FLIEGEN",()=>window.pressKey("Space"),"wide");
+  }else if(type==="fishdash"){
+    pad.innerHTML=touchButton("▲",()=>window.pressKey("ArrowUp"))+
+      touchButton("▼",()=>window.pressKey("ArrowDown"));
+  }else if(type==="2048"){
+    pad.innerHTML=touchButton("◀",()=>window.pressKey("ArrowLeft"))+
+      touchButton("▲",()=>window.pressKey("ArrowUp"))+
+      touchButton("▼",()=>window.pressKey("ArrowDown"))+
+      touchButton("▶",()=>window.pressKey("ArrowRight"));
+  }else if(type==="holdmeter"){
+    pad.innerHTML="";
+  }
+}
+window.pressKey=function(k){
+  const e=new KeyboardEvent("keydown",{key:k,code:k==="Space"?"Space":k,bubbles:true});
+  if(typeof document.onkeydown==="function")document.onkeydown(e);
+};
+function enableTouchCanvas(){
+  c.style.touchAction="none";
+  c.onpointerdown=function(e){
+    if(e.pointerType==="touch"){
+      e.preventDefault();
+      const r=c.getBoundingClientRect();
+      const ev=new MouseEvent("click",{bubbles:true,clientX:e.clientX,clientY:e.clientY});
+      c.dispatchEvent(ev);
+    }
+  };
+  c.onpointermove=function(e){
+    if(e.pointerType==="touch" && typeof document.onmousemove==="function"){
+      e.preventDefault();
+      document.onmousemove({clientX:e.clientX,clientY:e.clientY,preventDefault(){}});
+    }
+  };
+}
+
+function start(id){current=id;finished=false;clear();state={};let g=games.find(a=>a[0]===id);document.getElementById("games").style.display="none";document.getElementById("gameArea").style.display="block";document.getElementById("title").textContent=g[1]+" "+g[2];document.getElementById("instruction").textContent=g[3];score=0;best=+localStorage.getItem("ggbest_"+id)||0;document.getElementById("score").textContent=0;document.getElementById("best").textContent=best;document.getElementById("time").textContent="—";document.getElementById("controls").innerHTML="";document.getElementById("hint").textContent="";go("gameArea");window["g_"+id](); enableTouchCanvas(); showTouch(id)}
 function bg(ctx,top="#070b16",bottom="#02040a"){let g=ctx.createLinearGradient(0,0,0,560);g.addColorStop(0,top);g.addColorStop(1,bottom);ctx.fillStyle=g;ctx.fillRect(0,0,900,560)}
 function stars(n=100){return Array.from({length:n},()=>({x:rnd(0,900),y:rnd(0,560),r:rnd(.5,2.5),a:rnd(.2,1)}))}
 function drawStars(a){x.save();a.forEach(s=>{x.globalAlpha=s.a;x.fillStyle="#fff";x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()});x.restore()}
@@ -120,7 +178,7 @@ function g_guessnumber(){state.a=ri(1,100);document.getElementById("controls").i
 function g_diceduel(){document.getElementById("controls").innerHTML="<button class='primary' onclick='window.dice()'>🎲 Würfeln</button>";window.dice=()=>{let a=ri(1,6),b=ri(1,6);bg(x);x.fillStyle="#fff";x.font="bold 42px Arial";x.textAlign="center";x.fillText("DU  "+a,300,290);x.fillText("BOT  "+b,600,290);a>b?add(20):a===b&&add(10);score>=100&&finish()}}
 function g_oddoneout(){let odd=ri(0,15);function d(){bg(x);for(let i=0;i<16;i++){let bx=210+i%4*130,by=70+Math.floor(i/4)*110;x.fillStyle="#53cfff";if(i===odd){x.beginPath();x.arc(bx,by,27,0,7);x.fill()}else{x.roundRect(bx-23,by-23,46,46,6);x.fill()}}}c.onclick=e=>{let r=c.getBoundingClientRect(),xx=(e.clientX-r.left)*900/r.width,yy=(e.clientY-r.top)*560/r.height;if(xx<210||xx>730||yy<70||yy>400)return;let i=Math.floor((xx-210)/130)+Math.floor((yy-70)/110)*4;i===odd?finish(100):finish(0)};d()}
 function g_numbersprint(){let nums=Array.from({length:20},(_,i)=>i+1).sort(()=>Math.random()-.5),next=1;function d(){bg(x);nums.forEach((n,i)=>{let bx=100+i%5*145,by=60+Math.floor(i/5)*115;x.fillStyle=n===next?"#ffd75a":"#172442";x.roundRect(bx,by,115,80,12);x.fill();x.fillStyle="#fff";x.font="25px Arial";x.textAlign="center";x.fillText(n,bx+57,by+50)})}c.onclick=e=>{let r=c.getBoundingClientRect(),xx=(e.clientX-r.left)*900/r.width,yy=(e.clientY-r.top)*560/r.height;let col=Math.floor((xx-100)/145),row=Math.floor((yy-60)/115),i=row*5+col;if(i>=0&&i<20&&nums[i]===next){next++;add(5);d();if(next>20)finish(score+100)}};d();clock(30,()=>finish())}
-function g_holdmeter(){document.getElementById("controls").innerHTML="<button class='primary' id='hold'>GEDRÜCKT HALTEN</button>";let h=document.getElementById("hold");h.onpointerdown=()=>state.t=performance.now();h.onpointerup=()=>{if(!state.t)return;let ms=performance.now()-state.t;document.getElementById("hint").textContent=Math.round(ms)+" ms";finish(Math.max(0,100-Math.floor(Math.abs(ms-3000)/20)))}}
+function g_holdmeter(){document.getElementById("controls").innerHTML="<button class='primary' id='hold'>GEDRÜCKT HALTEN</button>";let h=document.getElementById("hold");h.onpointerdown=e=>{e.preventDefault();state.t=performance.now()};h.onpointerup=e=>{e.preventDefault();if(!state.t)return;let ms=performance.now()-state.t;document.getElementById("hint").textContent=Math.round(ms)+" ms";finish(Math.max(0,100-Math.floor(Math.abs(ms-3000)/20)))}}
 function g_wordscramble(){let ws=["galaxy","planet","rocket","gaming","neon","pixel","space","dragon","castle","computer"],w=ws[ri(0,ws.length-1)],s=w.split("").sort(()=>Math.random()-.5).join("");document.getElementById("hint").textContent="Buchstaben: "+s;document.getElementById("controls").innerHTML='<input id="word" placeholder="Wort" style="max-width:250px"><button onclick="window.word()">OK</button>';window.word=()=>finish(document.getElementById("word").value.trim().toLowerCase()===w?100:0)}
 function g_safetiles(){let safe=ri(0,15);bg(x);for(let i=0;i<16;i++){x.fillStyle="#19345a";x.roundRect(180+i%4*135,70+Math.floor(i/4)*105,100,75,12);x.fill()}c.onclick=e=>{let r=c.getBoundingClientRect(),xx=(e.clientX-r.left)*900/r.width,yy=(e.clientY-r.top)*560/r.height,i=Math.floor((xx-180)/135)+Math.floor((yy-70)/105)*4;i===safe?finish(100):finish(0)}}
 function g_connectdots(){let p=Array.from({length:10},()=>({x:rnd(70,830),y:rnd(70,490)})),n=0;function d(){bg(x);p.forEach((q,i)=>{x.fillStyle=i<n?"#32e68a":"#53d9ff";x.beginPath();x.arc(q.x,q.y,18,0,7);x.fill();x.fillStyle="#fff";x.font="14px Arial";x.textAlign="center";x.fillText(i+1,q.x,q.y+5)});for(let i=1;i<n;i++){x.strokeStyle="#fff";x.beginPath();x.moveTo(p[i-1].x,p[i-1].y);x.lineTo(p[i].x,p[i].y);x.stroke()}}c.onclick=e=>{let r=c.getBoundingClientRect(),xx=(e.clientX-r.left)*900/r.width,yy=(e.clientY-r.top)*560/r.height;if(Math.hypot(xx-p[n].x,yy-p[n].y)<30){n++;add(10);d();n===10&&finish(score+100)}};d()}
