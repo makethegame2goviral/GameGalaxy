@@ -622,4 +622,4712 @@ canvas{
 const GAMES = [
 
 ["galaxy","Galaxy Clicker","🚀","Baue Energie mit dem Kern.","arcade"],
-["snake","Neon Snake
+["snake","Neon Snake","🐍","Sammle Energie und wachse.","arcade"],
+["perfect","Perfect Timing","🎯","Stoppe die Linie im Ziel.","skill"],
+["reaction","Reaction Rush","⚡","Reagiere schneller als ein Blitz.","skill"],
+["memory","Memory Matrix","🧠","Merke dir die Farbfolge.","brain"],
+["2048","Neon 2048","🔢","Kombiniere die Zahlen.","brain"],
+["brick","Brick Breaker","🧱","Zerstöre die Neon-Blöcke.","arcade"],
+["tictactoe","Tic Tac Toe","❌","Drei in einer Reihe.","brain"],
+["pong","Neon Pong","🏓","Schlag den Ball zurück.","arcade"],
+["flappy","Flappy Galaxy","🐦","Fliege durch echte grüne Röhren.","arcade"],
+["lightsout","Lights Out","💡","Schalte alle Lichter aus.","brain"],
+["colormatch","Color Match","🎨","Finde die richtige Farbe.","skill"],
+["whack","Whack Grid","🔨","Triff das leuchtende Feld.","arcade"],
+["connect4","Connect Four","🔴","Vier gewinnt.","brain"],
+["simon","Simon Glow","🔊","Wiederhole die Farbfolge.","brain"],
+["higherlower","Higher / Lower","🃏","Rate höher oder niedriger.","brain"],
+["quickmath","Quick Math","➗","Löse Aufgaben unter Zeitdruck.","brain"],
+["coincatch","Coin Catch","🪙","Fange fallende Münzen.","arcade"],
+["safetiles","Safe Tiles","🟩","Finde den sicheren Weg.","skill"],
+["connectdots","Connect Dots","🔵","Verbinde die Punkte.","brain"],
+["guessnumber","Guess Number","🎲","Finde die geheime Zahl.","brain"],
+["diceduel","Dice Duel","🎲","Würfle gegen den Gegner.","arcade"],
+["oddoneout","Odd One Out","👁️","Finde den Unterschied.","skill"],
+["numbersprint","Number Sprint","🏃","Klicke die Zahlen in Reihenfolge.","skill"],
+["holdmeter","Hold Meter","⏱️","Halte exakt die Zielzeit.","skill"],
+["wordscramble","Word Scramble","🔤","Entwirre das Wort.","brain"],
+["aimtrainer","Aim Trainer","🎯","Treffe die Ziele.","skill"],
+["laneracer","Lane Racer","🏎️","Weiche Hindernissen aus.","arcade"],
+["helicave","Heli Cave","🚁","Fliege durch die Höhle.","arcade"],
+["fishdash","Fish Dash","🐟","Schwimme durch Gefahren.","arcade"],
+["basketshot","Basket Shot","🏀","Treffe den Korb.","skill"],
+["goalkeeper","Goalkeeper","🥅","Halte die Schüsse.","skill"],
+["neonrunner","Neon Runner","🏃‍♂️","Springe über Hindernisse.","arcade"]
+
+];
+
+const CATEGORIES = {
+  all:"Alle",
+  arcade:"Arcade",
+  skill:"Skill",
+  brain:"Brain"
+};
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+  "https://qvxnacgnuocnhuagpqpf.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_LQjkI1OC7fUIHnYslwX3MQ_xpkXtwEg";
+
+const supabaseClient =
+  window.supabase &&
+  typeof window.supabase.createClient === "function"
+    ? window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      )
+    : null;
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let currentGame = null;
+let score = 0;
+let best = 0;
+let finished = false;
+let animationId = 0;
+let intervalId = 0;
+let currentUser = null;
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g,function(c){
+    return {
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[c];
+  });
+}
+
+function showToast(text){
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+
+  clearTimeout(showToast.timer);
+
+  showToast.timer =
+    setTimeout(
+      () => t.classList.remove("show"),
+      2300
+    );
+}
+
+function localBest(id){
+  return Number(
+    localStorage.getItem("gg_best_"+id) || 0
+  );
+}
+
+function setScore(value){
+  score = Math.max(0,Math.floor(value));
+
+  $("hud").innerHTML = `
+    <div class="hudBox">⭐ Score <b>${score}</b></div>
+    <div class="hudBox">🏆 Best <b>${best}</b></div>
+  `;
+}
+
+function addScore(value){
+  setScore(score + value);
+}
+
+function stopGameLoops(){
+  if(animationId){
+    cancelAnimationFrame(animationId);
+    animationId = 0;
+  }
+
+  if(intervalId){
+    clearInterval(intervalId);
+    intervalId = 0;
+  }
+
+  document.onkeydown = null;
+}
+
+function finishGame(value=score){
+
+  if(finished) return;
+
+  finished = true;
+
+  stopGameLoops();
+
+  score = Math.floor(value);
+
+  setScore(score);
+
+  if(score > best){
+    best = score;
+
+    localStorage.setItem(
+      "gg_best_"+currentGame,
+      String(best)
+    );
+  }
+
+  saveLocalScore(score);
+  saveOnlineScore(score);
+
+  showToast("🏁 "+score+" Punkte!");
+}
+
+function saveLocalScore(value){
+
+  const key = "gg_local_"+currentGame;
+
+  let list = [];
+
+  try{
+    list = JSON.parse(
+      localStorage.getItem(key) || "[]"
+    );
+  }catch{
+    list = [];
+  }
+
+  list.push({
+    player:
+      localStorage.getItem("gg_player_name") ||
+      "Spieler",
+    score:value,
+    time:Date.now()
+  });
+
+  list.sort((a,b)=>b.score-a.score);
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(list.slice(0,20))
+  );
+}
+
+async function saveOnlineScore(value){
+
+  if(!supabaseClient || !currentUser)
+    return;
+
+  const playerName =
+    localStorage.getItem("gg_player_name") ||
+    currentUser.user_metadata?.player_name ||
+    currentUser.email?.split("@")[0] ||
+    "Spieler";
+
+  const result =
+    await supabaseClient
+      .from("scores")
+      .insert({
+        user_id:currentUser.id,
+        player_name:playerName,
+        game_id:currentGame,
+        score:value
+      });
+
+  if(result.error){
+    console.warn(
+      "Online Score konnte nicht gespeichert werden:",
+      result.error.message
+    );
+  }
+}
+
+/* =========================================================
+   HOME / GAME NAVIGATION
+========================================================= */
+
+function createCategories(){
+
+  $("chips").innerHTML =
+    Object.entries(CATEGORIES)
+      .map(([key,name])=>`
+        <button
+          class="chip ${key==="all"?"active":""}"
+          data-category="${key}"
+          onclick="selectCategory('${key}')">
+          ${name}
+        </button>
+      `)
+      .join("");
+}
+
+function selectCategory(category){
+
+  document
+    .querySelectorAll(".chip")
+    .forEach(button=>{
+      button.classList.toggle(
+        "active",
+        button.dataset.category === category
+      );
+    });
+
+  renderGames();
+}
+
+function renderGames(){
+
+  const query =
+    $("search").value.trim().toLowerCase();
+
+  const active =
+    document.querySelector(".chip.active")?.dataset.category ||
+    "all";
+
+  const games =
+    GAMES.filter(game=>{
+
+      const categoryOK =
+        active==="all" ||
+        game[4]===active;
+
+      const searchOK =
+        !query ||
+        game[1].toLowerCase().includes(query) ||
+        game[3].toLowerCase().includes(query);
+
+      return categoryOK && searchOK;
+    });
+
+  $("gameGrid").innerHTML =
+    games.map(game=>{
+
+      let glow =
+        game[4]==="arcade"
+          ? "#3de8ff"
+          : game[4]==="skill"
+          ? "#ff4fd8"
+          : "#9b5cff";
+
+      return `
+        <article
+          class="card"
+          style="--glow:${glow}">
+
+          <div class="icon">${game[2]}</div>
+
+          <h3>${game[1]}</h3>
+
+          <p>${game[3]}</p>
+
+          <div class="best">
+            Lokaler Bestwert:
+            <b>${localBest(game[0])}</b>
+          </div>
+
+          <button
+            class="btn primary"
+            onclick="startGame('${game[0]}')">
+            ▶ Spielen
+          </button>
+
+        </article>
+      `;
+    }).join("");
+}
+
+function startGame(id){
+
+  const game =
+    GAMES.find(g=>g[0]===id);
+
+  if(!game) return;
+
+  currentGame = id;
+
+  $("home").classList.add("hidden");
+  $("gameView").classList.remove("hidden");
+
+  $("gameTitle").textContent =
+    game[2]+" "+game[1];
+
+  stopGameLoops();
+
+  finished = false;
+  score = 0;
+  best = localBest(id);
+
+  $("controls").innerHTML = "";
+
+  setScore(0);
+
+  canvas.width =
+    Math.min(
+      900,
+      Math.max(320,window.innerWidth-30)
+    );
+
+  canvas.height = 560;
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  const fn =
+    window["game_"+id];
+
+  if(typeof fn==="function"){
+    fn();
+  }else{
+    gameFallback();
+  }
+
+  installCanvasTouch();
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+function goHome(){
+
+  stopGameLoops();
+
+  $("gameView").classList.add("hidden");
+  $("home").classList.remove("hidden");
+
+  renderGames();
+}
+
+function installCanvasTouch(){
+
+  canvas.style.touchAction = "none";
+
+  canvas.onpointerdown = function(e){
+
+    if(e.pointerType !== "touch")
+      return;
+
+    e.preventDefault();
+
+    if(typeof canvas.onclick === "function"){
+      canvas.onclick(e);
+    }
+  };
+
+  canvas.onpointermove = function(e){
+
+    if(e.pointerType !== "touch")
+      return;
+
+    if(typeof canvas.onmousemove === "function"){
+      e.preventDefault();
+
+      canvas.onmousemove({
+        clientX:e.clientX,
+        clientY:e.clientY,
+        preventDefault(){}
+      });
+    }
+  };
+}
+
+function createButtons(list){
+
+  $("controls").innerHTML =
+    list.map(item=>`
+      <button
+        class="touch"
+        data-action="${item[0]}">
+        ${item[1]}
+      </button>
+    `).join("");
+
+  $("controls")
+    .querySelectorAll(".touch")
+    .forEach(button=>{
+
+      button.addEventListener(
+        "pointerdown",
+        event=>{
+
+          event.preventDefault();
+
+          const fn =
+            window["action_"+button.dataset.action];
+
+          if(typeof fn==="function")
+            fn();
+        }
+      );
+    });
+}
+
+/* =========================================================
+   FULLSCREEN
+========================================================= */
+
+async function toggleFullscreen(){
+
+  try{
+
+    if(!document.fullscreenElement){
+
+      await document.documentElement.requestFullscreen?.();
+
+    }else{
+
+      await document.exitFullscreen?.();
+
+    }
+
+  }catch(error){
+
+    showToast("Vollbild wird vom Browser nicht unterstützt.");
+
+  }
+}
+
+/* =========================================================
+   COMMON DRAWING
+========================================================= */
+
+function drawSpace(){
+
+  const gradient =
+    ctx.createLinearGradient(
+      0,0,0,canvas.height
+    );
+
+  gradient.addColorStop(0,"#081936");
+  gradient.addColorStop(.55,"#070d20");
+  gradient.addColorStop(1,"#02050d");
+
+  ctx.fillStyle=gradient;
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  for(let i=0;i<80;i++){
+
+    const x =
+      (i*137)%canvas.width;
+
+    const y =
+      (i*73)%canvas.height;
+
+    const alpha =
+      .25 + ((i%5)/10);
+
+    ctx.fillStyle =
+      "rgba(255,255,255,"+alpha+")";
+
+    ctx.fillRect(x,y,2,2);
+  }
+}
+
+function drawGrid(){
+
+  ctx.strokeStyle="#ffffff0b";
+
+  for(let x=0;x<canvas.width;x+=45){
+
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,canvas.height);
+    ctx.stroke();
+  }
+
+  for(let y=0;y<canvas.height;y+=45){
+
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(canvas.width,y);
+    ctx.stroke();
+  }
+}
+
+function centerText(text,y,size=36){
+
+  ctx.textAlign="center";
+  ctx.font="900 "+size+"px system-ui";
+  ctx.fillStyle="#fff";
+
+  ctx.shadowColor="#3de8ff";
+  ctx.shadowBlur=15;
+
+  ctx.fillText(
+    text,
+    canvas.width/2,
+    y
+  );
+
+  ctx.shadowBlur=0;
+}
+
+/* =========================================================
+   1 GALAXY CLICKER
+========================================================= */
+
+function game_galaxy(){
+
+  let power=0;
+
+  createButtons([
+    ["galaxyTap","💥 KERN TREFFEN"]
+  ]);
+
+  window.action_galaxyTap=()=>{
+
+    power++;
+
+    addScore(1);
+
+    draw();
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    const radius =
+      90+
+      Math.sin(Date.now()/150)*10;
+
+    const gradient =
+      ctx.createRadialGradient(
+        canvas.width/2,
+        canvas.height/2,
+        3,
+        canvas.width/2,
+        canvas.height/2,
+        radius
+      );
+
+    gradient.addColorStop(0,"#fff");
+    gradient.addColorStop(.18,"#3de8ff");
+    gradient.addColorStop(.55,"#805cff");
+    gradient.addColorStop(1,"transparent");
+
+    ctx.fillStyle=gradient;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      canvas.width/2,
+      canvas.height/2,
+      radius,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    centerText(
+      "ENERGY CORE",
+      80,
+      24
+    );
+
+    centerText(
+      "TAP!",
+      canvas.height/2+15,
+      48
+    );
+  }
+
+  draw();
+}
+
+/* =========================================================
+   2 SNAKE
+========================================================= */
+
+function game_snake(){
+
+  const grid=20;
+  const cell=27;
+
+  let snake=[
+    {x:10,y:10},
+    {x:9,y:10}
+  ];
+
+  let direction={x:1,y:0};
+
+  let food={
+    x:15,
+    y:10
+  };
+
+  createButtons([
+    ["snakeUp","↑"],
+    ["snakeLeft","←"],
+    ["snakeDown","↓"],
+    ["snakeRight","→"]
+  ]);
+
+  window.action_snakeUp=()=>{
+    if(direction.y===0)
+      direction={x:0,y:-1};
+  };
+
+  window.action_snakeDown=()=>{
+    if(direction.y===0)
+      direction={x:0,y:1};
+  };
+
+  window.action_snakeLeft=()=>{
+    if(direction.x===0)
+      direction={x:-1,y:0};
+  };
+
+  window.action_snakeRight=()=>{
+    if(direction.x===0)
+      direction={x:1,y:0};
+  };
+
+  document.onkeydown=e=>{
+
+    if(e.key==="ArrowUp")
+      window.action_snakeUp();
+
+    if(e.key==="ArrowDown")
+      window.action_snakeDown();
+
+    if(e.key==="ArrowLeft")
+      window.action_snakeLeft();
+
+    if(e.key==="ArrowRight")
+      window.action_snakeRight();
+  };
+
+  intervalId =
+    setInterval(update,110);
+
+  function update(){
+
+    const head={
+      x:snake[0].x+direction.x,
+      y:snake[0].y+direction.y
+    };
+
+    if(
+      head.x<0 ||
+      head.y<0 ||
+      head.x>=grid ||
+      head.y>=grid ||
+      snake.some(
+        p=>p.x===head.x&&p.y===head.y
+      )
+    ){
+      finishGame();
+      return;
+    }
+
+    snake.unshift(head);
+
+    if(
+      head.x===food.x &&
+      head.y===food.y
+    ){
+
+      addScore(10);
+
+      food={
+        x:Math.floor(Math.random()*grid),
+        y:Math.floor(Math.random()*grid)
+      };
+
+    }else{
+
+      snake.pop();
+
+    }
+
+    draw();
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.fillStyle="#45ef88";
+
+    snake.forEach((part,index)=>{
+
+      ctx.shadowColor="#45ef88";
+      ctx.shadowBlur=index===0?18:7;
+
+      ctx.fillRect(
+        part.x*cell+2,
+        part.y*cell+2,
+        cell-4,
+        cell-4
+      );
+    });
+
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle="#ffd84a";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      food.x*cell+cell/2,
+      food.y*cell+cell/2,
+      9,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+  }
+
+  draw();
+}
+
+/* =========================================================
+   3 PERFECT TIMING
+========================================================= */
+
+function game_perfect(){
+
+  let position=40;
+  let direction=1;
+  const target=450;
+
+  createButtons([
+    ["perfectStop","⏹ STOP"]
+  ]);
+
+  window.action_perfectStop=()=>{
+
+    const difference =
+      Math.abs(position-target);
+
+    finish(
+      Math.max(
+        0,
+        Math.floor(100-difference/3)
+      )
+    );
+  };
+
+  function loop(){
+
+    position += direction*7;
+
+    if(position>850||position<40)
+      direction*=-1;
+
+    drawSpace();
+
+    ctx.fillStyle="#45ef88";
+
+    ctx.fillRect(
+      target-50,
+      210,
+      100,
+      130
+    );
+
+    ctx.fillStyle="#ff4fd8";
+
+    ctx.fillRect(
+      position-8,
+      190,
+      16,
+      170
+    );
+
+    centerText(
+      "STOP IM GRÜNEN BEREICH",
+      90,
+      22
+    );
+
+    animationId =
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   4 REACTION
+========================================================= */
+
+function game_reaction(){
+
+  let ready=false;
+  let start=0;
+
+  createButtons([
+    ["reaction","⚡ JETZT"]
+  ]);
+
+  window.action_reaction=()=>{
+
+    if(!ready){
+
+      showToast("Zu früh!");
+
+      finish(0);
+
+      return;
+    }
+
+    finish(
+      Math.max(
+        1,
+        1000-Math.floor(
+          performance.now()-start
+        )
+      )
+    );
+  };
+
+  drawSpace();
+
+  centerText(
+    "WARTE …",
+    270,
+    50
+  );
+
+  setTimeout(()=>{
+
+    if(finished)return;
+
+    ready=true;
+    start=performance.now();
+
+    drawSpace();
+
+    centerText(
+      "JETZT!",
+      270,
+      70
+    );
+
+  },800+Math.random()*2200);
+}
+
+/* =========================================================
+   5 MEMORY
+========================================================= */
+
+function game_memory(){
+
+  const colors=[
+    "#ff5570",
+    "#45ef88",
+    "#3de8ff",
+    "#a65cff"
+  ];
+
+  const labels=["🔴","🟢","🔵","🟣"];
+
+  let sequence=[];
+  let input=[];
+
+  createButtons(
+    colors.map(
+      (_,i)=>["memory"+i,labels[i]]
+    )
+  );
+
+  colors.forEach((_,i)=>{
+
+    window["action_memory"+i]=()=>{
+
+      if(!sequence.length)
+        return;
+
+      input.push(i);
+
+      const index=input.length-1;
+
+      if(input[index]!==sequence[index]){
+
+        finish(
+          Math.max(
+            0,
+            (sequence.length-1)*10
+          )
+        );
+
+        return;
+      }
+
+      if(input.length===sequence.length){
+
+        addScore(10);
+
+        input=[];
+
+        setTimeout(next,450);
+      }
+    };
+  });
+
+  function next(){
+
+    sequence.push(
+      Math.floor(
+        Math.random()*4
+      )
+    );
+
+    drawSequence();
+  }
+
+  function drawSequence(){
+
+    drawSpace();
+
+    centerText(
+      "MERKEN!",
+      80,
+      28
+    );
+
+    sequence.forEach(
+      (value,index)=>{
+
+        setTimeout(()=>{
+
+          if(finished)return;
+
+          drawSpace();
+
+          ctx.fillStyle=
+            colors[value];
+
+          ctx.shadowColor=
+            colors[value];
+
+          ctx.shadowBlur=40;
+
+          ctx.beginPath();
+
+          ctx.arc(
+            canvas.width/2,
+            280,
+            75,
+            0,
+            Math.PI*2
+          );
+
+          ctx.fill();
+
+          ctx.shadowBlur=0;
+
+        },index*500);
+      }
+    );
+  }
+
+  next();
+}
+
+/* =========================================================
+   6 2048
+========================================================= */
+
+function game_2048(){
+
+  let board=
+    Array(16).fill(0);
+
+  board[5]=2;
+
+  createButtons([
+    ["up2048","↑"],
+    ["left2048","←"],
+    ["down2048","↓"],
+    ["right2048","→"]
+  ]);
+
+  window.action_up2048=()=>move2048(0,-1);
+  window.action_down2048=()=>move2048(0,1);
+  window.action_left2048=()=>move2048(-1,0);
+  window.action_right2048=()=>move2048(1,0);
+
+  function move2048(dx,dy){
+
+    const next=
+      Array(16).fill(0);
+
+    for(let row=0;row<4;row++){
+
+      for(let col=0;col<4;col++){
+
+        const value=
+          board[row*4+col];
+
+        if(!value)continue;
+
+        let xPos=col;
+        let yPos=row;
+
+        while(
+          xPos+dx>=0 &&
+          xPos+dx<4 &&
+          yPos+dy>=0 &&
+          yPos+dy<4 &&
+          next[
+            (yPos+dy)*4+xPos+dx
+          ]===0
+        ){
+
+          xPos+=dx;
+          yPos+=dy;
+        }
+
+        const index=
+          yPos*4+xPos;
+
+        if(next[index]===value){
+
+          next[index]*=2;
+
+          addScore(next[index]);
+
+        }else{
+
+          next[index]=value;
+
+        }
+      }
+    }
+
+    board=next;
+
+    const empty=[];
+
+    board.forEach(
+      (v,i)=>{
+        if(v===0)
+          empty.push(i);
+      }
+    );
+
+    if(!empty.length){
+
+      finish(
+        Math.max(...board)
+      );
+
+      return;
+    }
+
+    const index=
+      empty[
+        Math.floor(
+          Math.random()*empty.length
+        )
+      ];
+
+    board[index]=2;
+
+    draw();
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    for(let i=0;i<16;i++){
+
+      const col=i%4;
+      const row=Math.floor(i/4);
+
+      const px=185+col*135;
+      const py=35+row*120;
+
+      ctx.fillStyle=
+        board[i]
+          ? "#17405d"
+          : "#0b1728";
+
+      ctx.fillRect(
+        px,
+        py,
+        120,
+        105
+      );
+
+      if(board[i]){
+
+        ctx.fillStyle="#fff";
+        ctx.font="900 30px system-ui";
+        ctx.textAlign="center";
+
+        ctx.fillText(
+          board[i],
+          px+60,
+          py+64
+        );
+      }
+    }
+  }
+
+  draw();
+}
+
+/* =========================================================
+   7 BRICK BREAKER
+========================================================= */
+
+function game_brick(){
+
+  let ball={
+    x:450,
+    y:500,
+    vx:5,
+    vy:-5
+  };
+
+  let paddle=450;
+
+  const bricks=[];
+
+  for(let row=0;row<5;row++){
+
+    for(let col=0;col<9;col++){
+
+      bricks.push({
+        x:40+col*92,
+        y:45+row*32,
+        alive:true
+      });
+    }
+  }
+
+  canvas.onmousemove=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    paddle=
+      (e.clientX-r.left)/
+      r.width*
+      canvas.width;
+  };
+
+  function loop(){
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    if(ball.x<10||ball.x>890)
+      ball.vx*=-1;
+
+    if(ball.y<10)
+      ball.vy=Math.abs(ball.vy);
+
+    if(
+      ball.y>500 &&
+      Math.abs(ball.x-paddle)<85
+    ){
+      ball.vy=-Math.abs(ball.vy);
+    }
+
+    for(const brick of bricks){
+
+      if(
+        brick.alive &&
+        ball.x>brick.x &&
+        ball.x<brick.x+82 &&
+        ball.y>brick.y &&
+        ball.y<brick.y+22
+      ){
+
+        brick.alive=false;
+        ball.vy*=-1;
+        addScore(5);
+      }
+    }
+
+    if(ball.y>570){
+
+      finish();
+
+      return;
+    }
+
+    drawSpace();
+
+    bricks.forEach((brick,index)=>{
+
+      if(!brick.alive)return;
+
+      ctx.fillStyle=
+        index%2
+          ? "#3de8ff"
+          : "#ff4fd8";
+
+      ctx.shadowColor=
+        ctx.fillStyle;
+
+      ctx.shadowBlur=12;
+
+      ctx.fillRect(
+        brick.x,
+        brick.y,
+        82,
+        22
+      );
+
+      ctx.shadowBlur=0;
+    });
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      9,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.fillRect(
+      paddle-70,
+      525,
+      140,
+      14
+    );
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   8 TIC TAC TOE
+========================================================= */
+
+function game_tictactoe(){
+
+  const board=
+    Array(9).fill("");
+
+  canvas.onclick=e=>{
+
+    if(finished)return;
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        ((e.clientX-r.left)/r.width)*3
+      );
+
+    const row=
+      Math.floor(
+        ((e.clientY-r.top)/r.height)*3
+      );
+
+    const index=row*3+col;
+
+    if(board[index])return;
+
+    board[index]="X";
+
+    if(checkWinner("X")){
+
+      finish(100);
+
+      return;
+    }
+
+    const free=
+      board
+        .map((v,i)=>v?null:i)
+        .filter(v=>v!==null);
+
+    if(!free.length){
+
+      finish(50);
+
+      return;
+    }
+
+    board[
+      free[
+        Math.floor(
+          Math.random()*free.length
+        )
+      ]
+    ]="O";
+
+    if(checkWinner("O")){
+
+      finish(0);
+
+      return;
+    }
+
+    draw();
+  };
+
+  function checkWinner(player){
+
+    const wins=[
+      [0,1,2],
+      [3,4,5],
+      [6,7,8],
+      [0,3,6],
+      [1,4,7],
+      [2,5,8],
+      [0,4,8],
+      [2,4,6]
+    ];
+
+    return wins.some(
+      row=>row.every(
+        i=>board[i]===player
+      )
+    );
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.strokeStyle="#3de8ff";
+    ctx.lineWidth=6;
+
+    for(let i=1;i<3;i++){
+
+      ctx.beginPath();
+      ctx.moveTo(
+        i*canvas.width/3,
+        60
+      );
+      ctx.lineTo(
+        i*canvas.width/3,
+        500
+      );
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(
+        0,
+        60+i*147
+      );
+      ctx.lineTo(
+        canvas.width,
+        60+i*147
+      );
+      ctx.stroke();
+    }
+
+    ctx.textAlign="center";
+    ctx.font="900 90px system-ui";
+
+    board.forEach((value,i)=>{
+
+      if(!value)return;
+
+      ctx.fillStyle=
+        value==="X"
+          ? "#3de8ff"
+          : "#ff4fd8";
+
+      ctx.fillText(
+        value,
+        150+(i%3)*300,
+        170+Math.floor(i/3)*145
+      );
+    });
+  }
+
+  draw();
+}
+
+/* =========================================================
+   9 PONG
+========================================================= */
+
+function game_pong(){
+
+  let ball={
+    x:450,
+    y:280,
+    vx:5,
+    vy:4
+  };
+
+  let playerY=280;
+  let cpuY=280;
+
+  canvas.onmousemove=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    playerY=
+      (e.clientY-r.top)/
+      r.height*
+      canvas.height;
+  };
+
+  function loop(){
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    if(ball.y<10||ball.y>550)
+      ball.vy*=-1;
+
+    cpuY+=(ball.y-cpuY)*.08;
+
+    if(
+      ball.x<40 &&
+      Math.abs(ball.y-playerY)<70
+    ){
+
+      ball.vx=Math.abs(ball.vx);
+      addScore(2);
+    }
+
+    if(
+      ball.x>860 &&
+      Math.abs(ball.y-cpuY)<70
+    ){
+
+      ball.vx=-Math.abs(ball.vx);
+    }
+
+    if(ball.x<0){
+
+      finish();
+
+      return;
+    }
+
+    drawSpace();
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.fillRect(
+      15,
+      playerY-55,
+      14,
+      110
+    );
+
+    ctx.fillStyle="#ff4fd8";
+
+    ctx.fillRect(
+      871,
+      cpuY-55,
+      14,
+      110
+    );
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      10,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   10 FLAPPY GALAXY
+========================================================= */
+
+function game_flappy(){
+
+  /*
+    Echter Vogel:
+    - Körper
+    - Auge
+    - Schnabel
+    - Flügel
+    - Rotation
+  */
+
+  const bird={
+    x:180,
+    y:270,
+    velocity:0,
+    radius:20
+  };
+
+  const pipes=[];
+
+  let frame=0;
+
+  const clouds=[
+    {x:100,y:90,s:1},
+    {x:400,y:140,s:.7},
+    {x:700,y:80,s:1.1},
+    {x:850,y:190,s:.8}
+  ];
+
+  createButtons([
+    ["flappyFlap","🐦 FLAP"]
+  ]);
+
+  window.action_flappyFlap=()=>{
+    bird.velocity=-8.5;
+  };
+
+  canvas.onclick=()=>{
+    bird.velocity=-8.5;
+  };
+
+  function createPipe(){
+
+    const gap=175;
+
+    const top=
+      70+
+      Math.random()*230;
+
+    pipes.push({
+      x:canvas.width+30,
+      top,
+      gap,
+      passed:false
+    });
+  }
+
+  createPipe();
+
+  function loop(){
+
+    if(finished)return;
+
+    frame++;
+
+    bird.velocity+=.43;
+    bird.y+=bird.velocity;
+
+    if(frame%95===0)
+      createPipe();
+
+    pipes.forEach(pipe=>{
+      pipe.x-=3.5;
+    });
+
+    while(
+      pipes.length &&
+      pipes[0].x < -100
+    ){
+      pipes.shift();
+    }
+
+    if(
+      bird.y-bird.radius<0 ||
+      bird.y+bird.radius>canvas.height
+    ){
+
+      finish();
+
+      return;
+    }
+
+    for(const pipe of pipes){
+
+      const birdRight=
+        bird.x+bird.radius;
+
+      const birdLeft=
+        bird.x-bird.radius;
+
+      const pipeRight=
+        pipe.x+78;
+
+      const touchingX=
+        birdRight>pipe.x &&
+        birdLeft<pipeRight;
+
+      const touchingY=
+        bird.y-bird.radius<pipe.top ||
+        bird.y+bird.radius>
+          pipe.top+pipe.gap;
+
+      if(touchingX&&touchingY){
+
+        finish();
+
+        return;
+      }
+
+      if(
+        !pipe.passed &&
+        pipeRight<bird.x
+      ){
+
+        pipe.passed=true;
+        addScore(10);
+      }
+    }
+
+    drawFlappy();
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  function drawFlappy(){
+
+    /*
+      Himmel
+    */
+
+    const sky=
+      ctx.createLinearGradient(
+        0,0,
+        0,canvas.height
+      );
+
+    sky.addColorStop(0,"#45b9ff");
+    sky.addColorStop(.55,"#9be7ff");
+    sky.addColorStop(1,"#e8f5c8");
+
+    ctx.fillStyle=sky;
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    /*
+      Wolken
+    */
+
+    clouds.forEach(cloud=>{
+
+      const cx=
+        (cloud.x-(frame*.35))%
+        (canvas.width+180);
+
+      const xPos=
+        cx<0
+          ? cx+canvas.width+180
+          : cx;
+
+      ctx.fillStyle="#ffffffaa";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        xPos,
+        cloud.y,
+        28*cloud.s,
+        0,
+        Math.PI*2
+      );
+
+      ctx.arc(
+        xPos+30*cloud.s,
+        cloud.y-10*cloud.s,
+        36*cloud.s,
+        0,
+        Math.PI*2
+      );
+
+      ctx.arc(
+        xPos+65*cloud.s,
+        cloud.y,
+        25*cloud.s,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+    });
+
+    /*
+      Hintergrund-Berge
+    */
+
+    ctx.fillStyle="#78bd6c";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,430);
+    ctx.lineTo(160,300);
+    ctx.lineTo(300,430);
+    ctx.lineTo(470,275);
+    ctx.lineTo(680,430);
+    ctx.lineTo(830,320);
+    ctx.lineTo(900,400);
+    ctx.lineTo(900,560);
+    ctx.lineTo(0,560);
+    ctx.closePath();
+
+    ctx.fill();
+
+    /*
+      Röhren
+    */
+
+    pipes.forEach(pipe=>{
+
+      drawPipe(
+        pipe.x,
+        0,
+        78,
+        pipe.top,
+        false
+      );
+
+      drawPipe(
+        pipe.x,
+        pipe.top+pipe.gap,
+        78,
+        canvas.height-
+        (pipe.top+pipe.gap),
+        true
+      );
+    });
+
+    /*
+      Vogel
+    */
+
+    drawBird(
+      bird.x,
+      bird.y,
+      bird.velocity
+    );
+  }
+
+  function drawPipe(px,py,width,height,bottom){
+
+    /*
+      Dunkelgrüner Außenrand
+    */
+
+    ctx.fillStyle="#0b3c18";
+
+    ctx.fillRect(
+      px-8,
+      py,
+      width+16,
+      height
+    );
+
+    /*
+      grüner Körper
+    */
+
+    const pipeGradient=
+      ctx.createLinearGradient(
+        px,
+        0,
+        px+width,
+        0
+      );
+
+    pipeGradient.addColorStop(
+      0,
+      "#247f2d"
+    );
+
+    pipeGradient.addColorStop(
+      .18,
+      "#45c34c"
+    );
+
+    pipeGradient.addColorStop(
+      .48,
+      "#68dc62"
+    );
+
+    pipeGradient.addColorStop(
+      .75,
+      "#38a83f"
+    );
+
+    pipeGradient.addColorStop(
+      1,
+      "#166523"
+    );
+
+    ctx.fillStyle=pipeGradient;
+
+    ctx.fillRect(
+      px,
+      py,
+      width,
+      height
+    );
+
+    /*
+      helles Highlight
+    */
+
+    ctx.fillStyle="#a0ed78aa";
+
+    ctx.fillRect(
+      px+13,
+      py,
+      10,
+      height
+    );
+
+    /*
+      dunkle Struktur
+    */
+
+    ctx.strokeStyle="#0a3214";
+    ctx.lineWidth=4;
+
+    for(
+      let y=py+10;
+      y<py+height;
+      y+=30
+    ){
+
+      ctx.beginPath();
+
+      ctx.moveTo(px+4,y);
+      ctx.lineTo(
+        px+width-4,
+        y
+      );
+
+      ctx.stroke();
+    }
+
+    /*
+      Rohrkopf
+    */
+
+    const capY=
+      bottom
+        ? py
+        : py+height-20;
+
+    ctx.fillStyle="#0a3a15";
+
+    ctx.fillRect(
+      px-13,
+      capY,
+      width+26,
+      24
+    );
+
+    ctx.fillStyle="#4ecf50";
+
+    ctx.fillRect(
+      px-7,
+      capY+4,
+      width+14,
+      15
+    );
+
+    ctx.fillStyle="#91eb70";
+
+    ctx.fillRect(
+      px+7,
+      capY+5,
+      12,
+      13
+    );
+
+    ctx.strokeStyle="#08230e";
+    ctx.lineWidth=3;
+
+    ctx.strokeRect(
+      px-13,
+      capY,
+      width+26,
+      24
+    );
+  }
+
+  function drawBird(px,py,velocity){
+
+    ctx.save();
+
+    ctx.translate(px,py);
+
+    ctx.rotate(
+      Math.max(
+        -.45,
+        Math.min(
+          .65,
+          velocity/13
+        )
+      )
+    );
+
+    /*
+      Glow
+    */
+
+    ctx.shadowColor="#ffd84a";
+    ctx.shadowBlur=20;
+
+    /*
+      Körper
+    */
+
+    ctx.fillStyle="#ffd83f";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      0,
+      0,
+      25,
+      19,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur=0;
+
+    /*
+      Bauch
+    */
+
+    ctx.fillStyle="#fff1a0";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      -4,
+      5,
+      14,
+      10,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+      Flügel
+    */
+
+    ctx.fillStyle="#efad16";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      -8,
+      8,
+      17,
+      8,
+      -.35,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+      Auge
+    */
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      12,
+      -8,
+      8,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      15,
+      -9,
+      3,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+      Schnabel
+    */
+
+    ctx.fillStyle="#ff7927";
+
+    ctx.beginPath();
+
+    ctx.moveTo(22,-1);
+    ctx.lineTo(42,7);
+    ctx.lineTo(22,13);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    /*
+      Schnabel-Linie
+    */
+
+    ctx.strokeStyle="#a63a13";
+    ctx.lineWidth=2;
+
+    ctx.beginPath();
+
+    ctx.moveTo(24,6);
+    ctx.lineTo(39,7);
+
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  loop();
+}
+
+/* =========================================================
+   11 LIGHTS OUT
+========================================================= */
+
+function game_lightsout(){
+
+  const board=
+    Array.from(
+      {length:25},
+      ()=>Math.random()>.5
+    );
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        (e.clientX-r.left)/
+        r.width*5
+      );
+
+    const row=
+      Math.floor(
+        (e.clientY-r.top)/
+        r.height*5
+      );
+
+    toggle(row,col);
+    draw();
+  };
+
+  function toggle(row,col){
+
+    const positions=[
+      [row,col],
+      [row-1,col],
+      [row+1,col],
+      [row,col-1],
+      [row,col+1]
+    ];
+
+    positions.forEach(([r,c])=>{
+
+      if(
+        r>=0&&
+        r<5&&
+        c>=0&&
+        c<5
+      ){
+
+        const i=r*5+c;
+
+        board[i]=!board[i];
+      }
+    });
+
+    if(!board.some(Boolean))
+      finish(100);
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    board.forEach((on,i)=>{
+
+      const col=i%5;
+      const row=Math.floor(i/5);
+
+      ctx.fillStyle=
+        on
+          ? "#3de8ff"
+          : "#111c2d";
+
+      ctx.shadowColor=
+        on
+          ? "#3de8ff"
+          : "transparent";
+
+      ctx.shadowBlur=
+        on?22:0;
+
+      ctx.fillRect(
+        100+col*180,
+        30+row*105,
+        150,
+        80
+      );
+    });
+
+    ctx.shadowBlur=0;
+  }
+
+  draw();
+}
+
+/* =========================================================
+   12 COLOR MATCH
+========================================================= */
+
+function game_colormatch(){
+
+  const colors=[
+    ["ROT","#ff5570"],
+    ["GRÜN","#45ef88"],
+    ["BLAU","#3de8ff"],
+    ["LILA","#a65cff"]
+  ];
+
+  let current;
+
+  function next(){
+
+    current=
+      colors[
+        Math.floor(
+          Math.random()*colors.length
+        )
+      ];
+
+    drawSpace();
+
+    ctx.fillStyle=current[1];
+
+    ctx.font="900 55px system-ui";
+    ctx.textAlign="center";
+
+    ctx.fillText(
+      current[0],
+      canvas.width/2,
+      250
+    );
+
+    createButtons(
+      colors.map(
+        color=>[
+          "color_"+color[0],
+          color[0]
+        ]
+      )
+    );
+
+    colors.forEach(color=>{
+
+      window[
+        "action_color_"+color[0]
+      ]=()=>{
+
+        if(color[0]===current[0]){
+
+          addScore(10);
+          next();
+
+        }else{
+
+          finish();
+
+        }
+      };
+    });
+  }
+
+  next();
+}
+
+/* =========================================================
+   13 WHACK
+========================================================= */
+
+function game_whack(){
+
+  let target=
+    Math.floor(
+      Math.random()*16
+    );
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        (e.clientX-r.left)/
+        r.width*4
+      );
+
+    const row=
+      Math.floor(
+        (e.clientY-r.top)/
+        r.height*4
+      );
+
+    const index=row*4+col;
+
+    if(index===target){
+
+      addScore(10);
+
+      target=
+        Math.floor(
+          Math.random()*16
+        );
+
+      draw();
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    for(let i=0;i<16;i++){
+
+      const col=i%4;
+      const row=Math.floor(i/4);
+
+      ctx.fillStyle=
+        i===target
+          ? "#ff4fd8"
+          : "#14263d";
+
+      ctx.shadowColor=
+        i===target
+          ? "#ff4fd8"
+          : "transparent";
+
+      ctx.shadowBlur=
+        i===target?25:0;
+
+      ctx.fillRect(
+        85+col*185,
+        25+row*125,
+        155,
+        95
+      );
+    }
+
+    ctx.shadowBlur=0;
+  }
+
+  draw();
+}
+
+/* =========================================================
+   14 CONNECT FOUR
+========================================================= */
+
+function game_connect4(){
+
+  const board=
+    Array(42).fill(0);
+
+  let turn=1;
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        (e.clientX-r.left)/
+        r.width*7
+      );
+
+    if(col<0||col>6)return;
+
+    for(let row=5;row>=0;row--){
+
+      const index=row*7+col;
+
+      if(!board[index]){
+
+        board[index]=turn;
+
+        if(check(turn)){
+
+          finish(
+            turn===1?100:0
+          );
+
+          return;
+        }
+
+        if(board.every(Boolean)){
+
+          finish(50);
+
+          return;
+        }
+
+        turn=2;
+
+        aiMove();
+
+        return;
+      }
+    }
+  };
+
+  function aiMove(){
+
+    const free=[];
+
+    for(let col=0;col<7;col++){
+
+      for(let row=5;row>=0;row--){
+
+        const index=row*7+col;
+
+        if(!board[index]){
+
+          free.push(index);
+          break;
+        }
+      }
+    }
+
+    if(!free.length)return;
+
+    const index=
+      free[
+        Math.floor(
+          Math.random()*free.length
+        )
+      ];
+
+    board[index]=2;
+
+    if(check(2)){
+
+      finish(0);
+
+      return;
+    }
+
+    turn=1;
+    draw();
+  }
+
+  function check(player){
+
+    const dirs=[
+      [1,0],
+      [0,1],
+      [1,1],
+      [1,-1]
+    ];
+
+    for(let row=0;row<6;row++){
+
+      for(let col=0;col<7;col++){
+
+        for(const [dx,dy] of dirs){
+
+          let count=0;
+
+          for(let n=0;n<4;n++){
+
+            const r=row+dy*n;
+            const c=col+dx*n;
+
+            if(
+              r>=0&&r<6&&
+              c>=0&&c<7&&
+              board[r*7+c]===player
+            ){
+              count++;
+            }
+          }
+
+          if(count===4)
+            return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.fillStyle="#0d3970";
+
+    ctx.fillRect(
+      110,
+      40,
+      680,
+      480
+    );
+
+    for(let row=0;row<6;row++){
+
+      for(let col=0;col<7;col++){
+
+        const value=
+          board[row*7+col];
+
+        ctx.fillStyle=
+          value===1
+            ? "#ff5570"
+            : value===2
+            ? "#ffd84a"
+            : "#071120";
+
+        ctx.beginPath();
+
+        ctx.arc(
+          160+col*97,
+          90+row*70,
+          27,
+          0,
+          Math.PI*2
+        );
+
+        ctx.fill();
+      }
+    }
+  }
+
+  draw();
+}
+
+/* =========================================================
+   15 SIMON
+========================================================= */
+
+function game_simon(){
+
+  const colors=[
+    "#ff5570",
+    "#45ef88",
+    "#3de8ff",
+    "#a65cff"
+  ];
+
+  let sequence=[];
+  let index=0;
+  let accepting=false;
+
+  createButtons(
+    colors.map(
+      (_,i)=>["simon"+i,["🔴","🟢","🔵","🟣"][i]]
+    )
+  );
+
+  colors.forEach((_,i)=>{
+
+    window["action_simon"+i]=()=>{
+
+      if(!accepting)return;
+
+      if(i!==sequence[index]){
+
+        finish(
+          sequence.length*10
+        );
+
+        return;
+      }
+
+      index++;
+
+      if(index===sequence.length){
+
+        accepting=false;
+        addScore(10);
+
+        setTimeout(nextRound,500);
+      }
+    };
+  });
+
+  function nextRound(){
+
+    sequence.push(
+      Math.floor(
+        Math.random()*4
+      )
+    );
+
+    index=0;
+
+    playSequence();
+  }
+
+  function playSequence(){
+
+    accepting=false;
+
+    sequence.forEach(
+      (color,index)=>{
+
+        setTimeout(()=>{
+
+          drawSpace();
+
+          ctx.fillStyle=
+            colors[color];
+
+          ctx.beginPath();
+
+          ctx.arc(
+            canvas.width/2,
+            280,
+            90,
+            0,
+            Math.PI*2
+          );
+
+          ctx.fill();
+
+        },index*500);
+      }
+    );
+
+    setTimeout(
+      ()=>{
+        accepting=true;
+        drawSpace();
+      },
+      sequence.length*500+300
+    );
+  }
+
+  nextRound();
+}
+
+/* =========================================================
+   16 HIGHER LOWER
+========================================================= */
+
+function game_higherlower(){
+
+  let number=
+    1+Math.floor(
+      Math.random()*50
+    );
+
+  createButtons([
+    ["higher","⬆ Höher"],
+    ["lower","⬇ Niedriger"]
+  ]);
+
+  action_higher=()=>guess(true);
+  action_lower=()=>guess(false);
+
+  function guess(higher){
+
+    const next=
+      1+Math.floor(
+        Math.random()*50
+      );
+
+    const correct=
+      higher
+        ? next>number
+        : next<number;
+
+    if(!correct){
+
+      finish();
+
+      return;
+    }
+
+    addScore(10);
+
+    number=next;
+
+    draw();
+  }
+
+  function draw(){
+
+    drawSpace();
+
+    centerText(
+      String(number),
+      260,
+      80
+    );
+
+    centerText(
+      "Was kommt als Nächstes?",
+      340,
+      24
+    );
+  }
+
+  draw();
+}
+
+/* =========================================================
+   17 QUICK MATH
+========================================================= */
+
+function game_quickmath(){
+
+  let answer=0;
+
+  function next(){
+
+    const a=
+      2+Math.floor(Math.random()*20);
+
+    const b=
+      2+Math.floor(Math.random()*20);
+
+    answer=a+b;
+
+    drawSpace();
+
+    centerText(
+      a+" + "+b+" = ?",
+      230,
+      50
+    );
+
+    $("controls").innerHTML=`
+      <input
+        id="mathAnswer"
+        inputmode="numeric"
+        class="search"
+        style="max-width:260px"
+        placeholder="Antwort">
+
+      <button
+        class="touch"
+        id="mathSubmit">
+        ✓
+      </button>
+    `;
+
+    $("mathSubmit").onclick=check;
+
+    $("mathAnswer").onkeydown=e=>{
+      if(e.key==="Enter")
+        check();
+    };
+
+    $("mathAnswer").focus();
+  }
+
+  function check(){
+
+    const value=
+      Number(
+        $("mathAnswer").value
+      );
+
+    if(value===answer){
+
+      addScore(10);
+      next();
+
+    }else{
+
+      finish();
+    }
+  }
+
+  next();
+}
+
+/* =========================================================
+   18 COIN CATCH
+========================================================= */
+
+function game_coincatch(){
+
+  let playerX=450;
+  const coins=[];
+
+  canvas.onmousemove=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    playerX=
+      (e.clientX-r.left)/
+      r.width*
+      canvas.width;
+  };
+
+  createButtons([
+    ["coinLeft","←"],
+    ["coinRight","→"]
+  ]);
+
+  action_coinLeft=()=>{
+    playerX=Math.max(50,playerX-45);
+  };
+
+  action_coinRight=()=>{
+    playerX=Math.min(850,playerX+45);
+  };
+
+  intervalId=
+    setInterval(()=>{
+
+      coins.push({
+        x:40+Math.random()*820,
+        y:-20,
+        speed:3+Math.random()*3
+      });
+
+    },650);
+
+  function loop(){
+
+    coins.forEach(
+      coin=>coin.y+=coin.speed
+    );
+
+    for(let i=coins.length-1;i>=0;i--){
+
+      const coin=coins[i];
+
+      if(
+        coin.y>500 &&
+        Math.abs(
+          coin.x-playerX
+        )<70
+      ){
+
+        coins.splice(i,1);
+        addScore(10);
+
+      }else if(coin.y>570){
+
+        coins.splice(i,1);
+      }
+    }
+
+    drawSpace();
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.fillRect(
+      playerX-65,
+      520,
+      130,
+      16
+    );
+
+    coins.forEach(coin=>{
+
+      ctx.fillStyle="#ffd84a";
+
+      ctx.shadowColor="#ffd84a";
+      ctx.shadowBlur=20;
+
+      ctx.beginPath();
+
+      ctx.arc(
+        coin.x,
+        coin.y,
+        12,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+      ctx.shadowBlur=0;
+    });
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   19 SAFE TILES
+========================================================= */
+
+function game_safetiles(){
+
+  const safe=
+    Math.floor(
+      Math.random()*25
+    );
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        e.clientX/r.width*5
+      );
+
+    const row=
+      Math.floor(
+        e.clientY/r.height*5
+      );
+
+    const index=row*5+col;
+
+    if(index===safe){
+
+      addScore(20);
+
+      showToast("✓ Sicher!");
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    for(let i=0;i<25;i++){
+
+      const col=i%5;
+      const row=Math.floor(i/5);
+
+      ctx.fillStyle="#123047";
+
+      ctx.fillRect(
+        105+col*145,
+        25+row*105,
+        120,
+        80
+      );
+    }
+  }
+
+  draw();
+}
+
+/* =========================================================
+   20 CONNECT DOTS
+========================================================= */
+
+function game_connectdots(){
+
+  const points=[];
+
+  for(let i=0;i<7;i++){
+
+    points.push({
+      x:80+Math.random()*740,
+      y:60+Math.random()*420
+    });
+  }
+
+  let selected=0;
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const mx=
+      e.clientX-r.left;
+
+    const my=
+      e.clientY-r.top;
+
+    const point=points[selected];
+
+    if(
+      Math.hypot(
+        mx-point.x,
+        my-point.y
+      )<40
+    ){
+
+      selected++;
+
+      addScore(10);
+
+      if(selected===points.length){
+
+        finish(100);
+
+      }else{
+
+        draw();
+      }
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.lineWidth=5;
+    ctx.strokeStyle="#3de8ff";
+
+    ctx.beginPath();
+
+    for(let i=0;i<selected;i++){
+
+      const p=points[i];
+
+      if(i===0)
+        ctx.moveTo(p.x,p.y);
+      else
+        ctx.lineTo(p.x,p.y);
+    }
+
+    ctx.stroke();
+
+    points.forEach((p,i)=>{
+
+      ctx.fillStyle=
+        i<selected
+          ? "#45ef88"
+          : "#3de8ff";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        p.x,
+        p.y,
+        18,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+      ctx.fillStyle="#fff";
+      ctx.font="bold 16px system-ui";
+      ctx.textAlign="center";
+
+      ctx.fillText(
+        i+1,
+        p.x,
+        p.y+6
+      );
+    });
+  }
+
+  draw();
+}
+
+/* =========================================================
+   21 GUESS NUMBER
+========================================================= */
+
+function game_guessnumber(){
+
+  const secret=
+    1+Math.floor(
+      Math.random()*100
+    );
+
+  $("controls").innerHTML=`
+    <input
+      id="guessInput"
+      class="search"
+      inputmode="numeric"
+      placeholder="1–100"
+      style="max-width:220px">
+
+    <button
+      id="guessButton"
+      class="touch">
+      Raten
+    </button>
+  `;
+
+  $("guessButton").onclick=guess;
+
+  $("guessInput").onkeydown=e=>{
+    if(e.key==="Enter")
+      guess();
+  };
+
+  function guess(){
+
+    const value=
+      Number(
+        $("guessInput").value
+      );
+
+    if(!value)return;
+
+    if(value===secret){
+
+      finish(100);
+
+      return;
+    }
+
+    if(value<secret){
+
+      showToast("⬆ Höher!");
+
+    }else{
+
+      showToast("⬇ Niedriger!");
+    }
+
+    addScore(2);
+
+    $("guessInput").value="";
+  }
+
+  drawSpace();
+
+  centerText(
+    "Finde die Zahl 1–100",
+    230,
+    32
+  );
+}
+
+/* =========================================================
+   22 DICE DUEL
+========================================================= */
+
+function game_diceduel(){
+
+  createButtons([
+    ["rollDice","🎲 WÜRFELN"]
+  ]);
+
+  action_rollDice=()=>{
+
+    const player=
+      1+Math.floor(
+        Math.random()*6
+      );
+
+    const cpu=
+      1+Math.floor(
+        Math.random()*6
+      );
+
+    drawSpace();
+
+    centerText(
+      "Du: "+player+
+      "   CPU: "+cpu,
+      270,
+      42
+    );
+
+    if(player>cpu)
+      addScore(20);
+
+    else if(player===cpu)
+      addScore(5);
+
+    else
+      finish();
+  };
+}
+
+/* =========================================================
+   23 ODD ONE OUT
+========================================================= */
+
+function game_oddoneout(){
+
+  let odd=
+    Math.floor(
+      Math.random()*25
+    );
+
+  const base="#43e9ff";
+  const different="#48e5ee";
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        e.clientX/r.width*5
+      );
+
+    const row=
+      Math.floor(
+        e.clientY/r.height*5
+      );
+
+    const index=row*5+col;
+
+    if(index===odd){
+
+      addScore(15);
+
+      odd=
+        Math.floor(
+          Math.random()*25
+        );
+
+      draw();
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    for(let i=0;i<25;i++){
+
+      const col=i%5;
+      const row=Math.floor(i/5);
+
+      ctx.fillStyle=
+        i===odd
+          ? different
+          : base;
+
+      ctx.fillRect(
+        110+col*145,
+        25+row*105,
+        115,
+        80
+      );
+    }
+  }
+
+  draw();
+}
+
+/* =========================================================
+   24 NUMBER SPRINT
+========================================================= */
+
+function game_numbersprint(){
+
+  let next=1;
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const col=
+      Math.floor(
+        e.clientX/r.width*5
+      );
+
+    const row=
+      Math.floor(
+        e.clientY/r.height*5
+      );
+
+    const index=row*5+col;
+
+    if(index===next-1){
+
+      next++;
+
+      addScore(5);
+
+      if(next>25){
+
+        finish(125);
+
+        return;
+      }
+
+      draw();
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    const numbers=
+      Array.from(
+        {length:25},
+        (_,i)=>i+1
+      ).sort(
+        ()=>Math.random()-.5
+      );
+
+    numbers.forEach((number,i)=>{
+
+      const col=i%5;
+      const row=Math.floor(i/5);
+
+      ctx.fillStyle="#13263e";
+
+      ctx.fillRect(
+        105+col*145,
+        25+row*105,
+        120,
+        80
+      );
+
+      ctx.fillStyle=
+        number<next
+          ? "#45ef88"
+          : "#fff";
+
+      ctx.font="900 25px system-ui";
+      ctx.textAlign="center";
+
+      ctx.fillText(
+        number,
+        165+col*145,
+        75+row*105
+      );
+    });
+
+    centerText(
+      "NÄCHSTE: "+next,
+      550,
+      20
+    );
+  }
+
+  draw();
+}
+
+/* =========================================================
+   25 HOLD METER
+========================================================= */
+
+function game_holdmeter(){
+
+  let start=0;
+  let holding=false;
+
+  createButtons([
+    ["hold","⏱ HALTEN"]
+  ]);
+
+  const button=
+    $("controls").querySelector("button");
+
+  button.addEventListener(
+    "pointerdown",
+    ()=>{
+      holding=true;
+      start=performance.now();
+    }
+  );
+
+  button.addEventListener(
+    "pointerup",
+    ()=>{
+      if(!holding)return;
+
+      holding=false;
+
+      const seconds=
+        (performance.now()-start)/1000;
+
+      finish(
+        Math.max(
+          0,
+          Math.floor(
+            100-Math.abs(seconds-3)*30
+          )
+        )
+      );
+    }
+  );
+
+  function draw(){
+
+    drawSpace();
+
+    centerText(
+      "3.00 SEKUNDEN",
+      180,
+      40
+    );
+  }
+
+  draw();
+}
+
+/* =========================================================
+   26 WORD SCRAMBLE
+========================================================= */
+
+function game_wordscramble(){
+
+  const words=[
+    "GALAXY",
+    "ARCADE",
+    "SNAKE",
+    "FLAPPY",
+    "NEON",
+    "PLAYER",
+    "ROCKET"
+  ];
+
+  const original=
+    words[
+      Math.floor(
+        Math.random()*words.length
+      )
+    ];
+
+  const scrambled=
+    original
+      .split("")
+      .sort(()=>Math.random()-.5)
+      .join("");
+
+  $("controls").innerHTML=`
+    <input
+      id="wordInput"
+      class="search"
+      style="max-width:260px"
+      placeholder="Wort">
+
+    <button
+      id="wordButton"
+      class="touch">
+      ✓
+    </button>
+  `;
+
+  $("wordButton").onclick=check;
+
+  $("wordInput").onkeydown=e=>{
+    if(e.key==="Enter")
+      check();
+  };
+
+  function check(){
+
+    if(
+      $("wordInput")
+        .value
+        .trim()
+        .toUpperCase()===original
+    ){
+
+      finish(100);
+
+    }else{
+
+      finish();
+    }
+  }
+
+  drawSpace();
+
+  centerText(
+    scrambled,
+    250,
+    55
+  );
+}
+
+/* =========================================================
+   27 AIM TRAINER
+========================================================= */
+
+function game_aimtrainer(){
+
+  let target={
+    x:450,
+    y:280
+  };
+
+  let hits=0;
+
+  function moveTarget(){
+
+    target={
+      x:50+Math.random()*800,
+      y:50+Math.random()*460
+    };
+  }
+
+  canvas.onclick=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    const mx=e.clientX-r.left;
+    const my=e.clientY-r.top;
+
+    if(
+      Math.hypot(
+        mx-target.x,
+        my-target.y
+      )<35
+    ){
+
+      hits++;
+      addScore(10);
+
+      if(hits>=10){
+
+        finish(100);
+
+      }else{
+
+        moveTarget();
+        draw();
+      }
+
+    }else{
+
+      finish();
+
+    }
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.fillStyle="#ff4fd8";
+
+    ctx.shadowColor="#ff4fd8";
+    ctx.shadowBlur=30;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      target.x,
+      target.y,
+      28,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur=0;
+
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=3;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      target.x,
+      target.y,
+      12,
+      0,
+      Math.PI*2
+    );
+
+    ctx.stroke();
+  }
+
+  draw();
+}
+
+/* =========================================================
+   28 LANE RACER
+========================================================= */
+
+function game_laneracer(){
+
+  let lane=1;
+  let playerY=470;
+  const obstacles=[];
+
+  createButtons([
+    ["laneLeft","←"],
+    ["laneRight","→"]
+  ]);
+
+  action_laneLeft=()=>{
+    lane=Math.max(0,lane-1);
+  };
+
+  action_laneRight=()=>{
+    lane=Math.min(2,lane+1);
+  };
+
+  document.onkeydown=e=>{
+
+    if(e.key==="ArrowLeft")
+      action_laneLeft();
+
+    if(e.key==="ArrowRight")
+      action_laneRight();
+  };
+
+  intervalId=setInterval(()=>{
+
+    obstacles.push({
+      lane:Math.floor(Math.random()*3),
+      y:-60
+    });
+
+  },750);
+
+  function loop(){
+
+    obstacles.forEach(
+      obstacle=>obstacle.y+=6
+    );
+
+    for(let i=obstacles.length-1;i>=0;i--){
+
+      const o=obstacles[i];
+
+      if(
+        o.y>430 &&
+        o.y<530 &&
+        o.lane===lane
+      ){
+
+        finish();
+
+        return;
+      }
+
+      if(o.y>600){
+
+        obstacles.splice(i,1);
+        addScore(2);
+      }
+    }
+
+    drawSpace();
+
+    for(let i=0;i<4;i++){
+
+      ctx.fillStyle=
+        i%2
+          ? "#101d31"
+          : "#0b1729";
+
+      ctx.fillRect(
+        0,
+        i*150,
+        canvas.width,
+        150
+      );
+    }
+
+    for(let i=0;i<4;i++){
+
+      ctx.fillStyle="#ffffff33";
+
+      ctx.fillRect(
+        300,
+        i*150,
+        7,
+        80
+      );
+
+      ctx.fillRect(
+        600,
+        i*150,
+        7,
+        80
+      );
+    }
+
+    obstacles.forEach(o=>{
+
+      ctx.fillStyle="#ff5570";
+
+      ctx.fillRect(
+        80+o.lane*300,
+        o.y,
+        130,
+        70
+      );
+    });
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.shadowColor="#3de8ff";
+    ctx.shadowBlur=25;
+
+    ctx.fillRect(
+      80+lane*300,
+      playerY,
+      130,
+      60
+    );
+
+    ctx.shadowBlur=0;
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   29 HELI CAVE
+========================================================= */
+
+function game_helicave(){
+
+  let heliY=280;
+  let velocity=0;
+  let walls=[];
+  let frame=0;
+
+  createButtons([
+    ["heliUp","🚁 UP"]
+  ]);
+
+  action_heliUp=()=>{
+    velocity=-6;
+  };
+
+  canvas.onclick=()=>{
+    velocity=-6;
+  };
+
+  function loop(){
+
+    frame++;
+
+    velocity+=.3;
+    heliY+=velocity;
+
+    if(frame%80===0){
+
+      const gapY=
+        100+
+        Math.random()*250;
+
+      walls.push({
+        x:900,
+        gapY
+      });
+    }
+
+    walls.forEach(
+      wall=>wall.x-=4
+    );
+
+    for(const wall of walls){
+
+      if(
+        160>wall.x &&
+        120<wall.x+90 &&
+        (
+          heliY<wall.gapY ||
+          heliY>wall.gapY+160
+        )
+      ){
+
+        finish();
+
+        return;
+      }
+    }
+
+    if(
+      heliY<0 ||
+      heliY>560
+    ){
+
+      finish();
+
+      return;
+    }
+
+    walls=
+      walls.filter(
+        wall=>wall.x>-120
+      );
+
+    drawSpace();
+
+    walls.forEach(wall=>{
+
+      ctx.fillStyle="#263f57";
+
+      ctx.fillRect(
+        wall.x,
+        0,
+        90,
+        wall.gapY
+      );
+
+      ctx.fillRect(
+        wall.x,
+        wall.gapY+160,
+        90,
+        560-wall.gapY-160
+      );
+    });
+
+    ctx.fillStyle="#ffd84a";
+
+    ctx.fillRect(
+      120,
+      heliY-12,
+      60,
+      24
+    );
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      155,
+      heliY,
+      12,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   30 FISH DASH
+========================================================= */
+
+function game_fishdash(){
+
+  let fishY=280;
+  let velocity=0;
+  let obstacles=[];
+  let frame=0;
+
+  createButtons([
+    ["fishUp","🐟 UP"]
+  ]);
+
+  action_fishUp=()=>{
+    velocity=-7;
+  };
+
+  canvas.onclick=()=>{
+    velocity=-7;
+  };
+
+  function loop(){
+
+    frame++;
+
+    velocity+=.25;
+    fishY+=velocity;
+
+    if(frame%70===0){
+
+      obstacles.push({
+        x:900,
+        y:50+Math.random()*400
+      });
+    }
+
+    obstacles.forEach(
+      o=>o.x-=4
+    );
+
+    if(
+      fishY<0||
+      fishY>560
+    ){
+
+      finish();
+
+      return;
+    }
+
+    for(const o of obstacles){
+
+      if(
+        Math.abs(o.x-160)<45 &&
+        Math.abs(o.y-fishY)<55
+      ){
+
+        finish();
+
+        return;
+      }
+    }
+
+    obstacles=
+      obstacles.filter(
+        o=>o.x>-60
+      );
+
+    const gradient=
+      ctx.createLinearGradient(
+        0,0,0,560
+      );
+
+    gradient.addColorStop(
+      0,
+      "#0874a6"
+    );
+
+    gradient.addColorStop(
+      1,
+      "#03283e"
+    );
+
+    ctx.fillStyle=gradient;
+
+    ctx.fillRect(
+      0,0,900,560
+    );
+
+    obstacles.forEach(o=>{
+
+      ctx.fillStyle="#d5e4ee";
+
+      ctx.beginPath();
+
+      ctx.arc(
+        o.x,
+        o.y,
+        25,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+    });
+
+    ctx.fillStyle="#ffd84a";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      160,
+      fishY,
+      30,
+      17,
+      0,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#ff8b2b";
+
+    ctx.beginPath();
+
+    ctx.moveTo(130,fishY);
+    ctx.lineTo(105,fishY-20);
+    ctx.lineTo(105,fishY+20);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle="#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      172,
+      fishY-5,
+      4,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   31 BASKET SHOT
+========================================================= */
+
+function game_basketshot(){
+
+  let power=0;
+
+  createButtons([
+    ["basket","🏀 WURF"]
+  ]);
+
+  action_basket=()=>{
+
+    power++;
+
+    const success=
+      Math.random()>.35;
+
+    if(success)
+      addScore(20);
+    else
+      finish();
+
+    draw();
+  };
+
+  function draw(){
+
+    drawSpace();
+
+    ctx.strokeStyle="#ff9b2d";
+    ctx.lineWidth=8;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      650,
+      220,
+      45,
+      0,
+      Math.PI*2
+    );
+
+    ctx.stroke();
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      260,
+      470,
+      25,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    centerText(
+      "WURF!",
+      90,
+      34
+    );
+  }
+
+  draw();
+}
+
+/* =========================================================
+   32 GOALKEEPER
+========================================================= */
+
+function game_goalkeeper(){
+
+  let keeper=450;
+  let ball={
+    x:450,
+    y:100,
+    vx:0,
+    vy:6
+  };
+
+  canvas.onmousemove=e=>{
+
+    const r=
+      canvas.getBoundingClientRect();
+
+    keeper=
+      (e.clientX-r.left)/
+      r.width*
+      canvas.width;
+  };
+
+  createButtons([
+    ["goalLeft","←"],
+    ["goalRight","→"]
+  ]);
+
+  action_goalLeft=()=>{
+    keeper=Math.max(80,keeper-50);
+  };
+
+  action_goalRight=()=>{
+    keeper=Math.min(820,keeper+50);
+  };
+
+  function resetBall(){
+
+    ball={
+      x:100+Math.random()*700,
+      y:100,
+      vx:(Math.random()-.5)*4,
+      vy:5
+    };
+  }
+
+  function loop(){
+
+    ball.x+=ball.vx;
+    ball.y+=ball.vy;
+
+    if(ball.y>490){
+
+      if(
+        Math.abs(
+          ball.x-keeper
+        )<80
+      ){
+
+        addScore(10);
+        resetBall();
+
+      }else{
+
+        finish();
+
+        return;
+      }
+    }
+
+    drawSpace();
+
+    ctx.fillStyle="#45ef88";
+
+    ctx.fillRect(
+      100,
+      80,
+      700,
+      12
+    );
+
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=5;
+
+    ctx.strokeRect(
+      100,
+      80,
+      700,
+      440
+    );
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.fillRect(
+      keeper-70,
+      500,
+      140,
+      15
+    );
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      ball.x,
+      ball.y,
+      11,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   33 NEON RUNNER
+========================================================= */
+
+function game_neonrunner(){
+
+  let playerY=480;
+  let velocity=0;
+  let jumping=false;
+
+  const obstacles=[];
+
+  createButtons([
+    ["runnerJump","⬆ SPRINGEN"]
+  ]);
+
+  action_runnerJump=()=>{
+
+    if(!jumping){
+
+      velocity=-11;
+      jumping=true;
+    }
+  };
+
+  canvas.onclick=()=>{
+    action_runnerJump();
+  };
+
+  document.onkeydown=e=>{
+
+    if(
+      e.key===" "||
+      e.key==="ArrowUp"
+    ){
+
+      action_runnerJump();
+    }
+  };
+
+  let frame=0;
+
+  function loop(){
+
+    frame++;
+
+    velocity+=.55;
+    playerY+=velocity;
+
+    if(playerY>=480){
+
+      playerY=480;
+      velocity=0;
+      jumping=false;
+    }
+
+    if(frame%75===0){
+
+      obstacles.push({
+        x:900,
+        width:35+Math.random()*30,
+        height:40+Math.random()*60
+      });
+    }
+
+    obstacles.forEach(
+      obstacle=>obstacle.x-=7
+    );
+
+    for(const obstacle of obstacles){
+
+      if(
+        obstacle.x<150 &&
+        obstacle.x+obstacle.width>100 &&
+        playerY+45>
+          540-obstacle.height
+      ){
+
+        finish();
+
+        return;
+      }
+    }
+
+    obstacles=
+      obstacles.filter(
+        obstacle=>obstacle.x>-100
+      );
+
+    drawSpace();
+
+    ctx.fillStyle="#101d32";
+
+    ctx.fillRect(
+      0,
+      525,
+      900,
+      35
+    );
+
+    ctx.fillStyle="#3de8ff";
+
+    ctx.shadowColor="#3de8ff";
+    ctx.shadowBlur=20;
+
+    ctx.fillRect(
+      100,
+      playerY,
+      50,
+      45
+    );
+
+    ctx.shadowBlur=0;
+
+    obstacles.forEach(obstacle=>{
+
+      ctx.fillStyle="#ff4fd8";
+
+      ctx.fillRect(
+        obstacle.x,
+        525-obstacle.height,
+        obstacle.width,
+        obstacle.height
+      );
+    });
+
+    animationId=
+      requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+/* =========================================================
+   FALLBACK
+========================================================= */
+
+function gameFallback(){
+
+  drawSpace();
+
+  centerText(
+    "GAME READY",
+    270,
+    48
+  );
+
+  createButtons([
+    ["fallback","START"]
+  ]);
+
+  action_fallback=()=>{
+    addScore(10);
+  };
+}
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+function toggleAuth(){
+
+  $("authPanel")
+    .classList.toggle("hidden");
+
+  $("authPanel").scrollIntoView({
+    behavior:"smooth"
+  });
+}
+
+async function register(){
+
+  if(!supabaseClient){
+
+    showToast(
+      "Supabase ist gerade nicht erreichbar."
+    );
+
+    return;
+  }
+
+  const name=
+    $("playerName").value.trim();
+
+  const email=
+    $("email").value.trim();
+
+  const password=
+    $("password").value;
+
+  if(
+    !name ||
+    !email ||
+    password.length<6
+  ){
+
+    showToast(
+      "Name, E-Mail und Passwort eingeben."
+    );
+
+    return;
+  }
+
+  localStorage.setItem(
+    "gg_player_name",
+    name
+  );
+
+  const result=
+    await supabaseClient.auth.signUp({
+      email,
+      password,
+      options:{
+        data:{
+          player_name:name
+        }
+      }
+    });
+
+  $("authStatus").textContent =
+    result.error
+      ? result.error.message
+      : "Registrierung erfolgreich.";
+}
+
+async function login(){
+
+  if(!supabaseClient){
+
+    showToast(
+      "Supabase ist gerade nicht erreichbar."
+    );
+
+    return;
+  }
+
+  const email=
+    $("email").value.trim();
+
+  const password=
+    $("password").value;
+
+  const result=
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if(result.error){
+
+    $("authStatus").textContent =
+      result.error.message;
+
+  }else{
+
+    currentUser=result.data.user;
+
+    $("authStatus").textContent =
+      "Eingeloggt: "+
+      currentUser.email;
+
+    showToast(
+      "Online verbunden ✓"
+    );
+  }
+}
+
+async function logout(){
+
+  if(supabaseClient)
+    await supabaseClient.auth.signOut();
+
+  currentUser=null;
+
+  $("authStatus").textContent=
+    "Ausgeloggt.";
+}
+
+/* =========================================================
+   LEADERBOARD
+========================================================= */
+
+function openLeaderboard(){
+
+  $("leaderGame").innerHTML =
+    GAMES.map(game=>`
+      <option value="${game[0]}">
+        ${game[2]} ${game[1]}
+      </option>
+    `).join("");
+
+  $("leaderGame").value=
+    currentGame || "flappy";
+
+  $("leaderModal").style.display=
+    "flex";
+
+  loadLeaderboard();
+}
+
+function closeLeaderboard(){
+
+  $("leaderModal").style.display=
+    "none";
+}
+
+async function loadLeaderboard(){
+
+  const id=
+    $("leaderGame").value;
+
+  const game=
+    GAMES.find(g=>g[0]===id);
+
+  $("leaderContent").innerHTML=
+    "<p style='color:#91a6c3'>Lade …</p>";
+
+  if(!supabaseClient){
+
+    showLocalLeaderboard(
+      id,
+      game
+    );
+
+    return;
+  }
+
+  const result=
+    await supabaseClient
+      .from("scores")
+      .select(
+        "player_name,score,created_at"
+      )
+      .eq("game_id",id)
+      .order(
+        "score",
+        {ascending:false}
+      )
+      .limit(10);
+
+  if(
+    result.error ||
+    !result.data ||
+    !result.data.length
+  ){
+
+    showLocalLeaderboard(
+      id,
+      game
+    );
+
+    return;
+  }
+
+  $("leaderContent").innerHTML=`
+    <h3>
+      ${game[2]} ${game[1]}
+    </h3>
+
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Spieler</th>
+        <th>Score</th>
+      </tr>
+
+      ${result.data.map(
+        (row,index)=>`
+          <tr>
+            <td>${index+1}</td>
+            <td>${escapeHTML(row.player_name)}</td>
+            <td><b>${row.score}</b></td>
+          </tr>
+        `
+      ).join("")}
+    </table>
+  `;
+}
+
+function showLocalLeaderboard(id,game){
+
+  let list=[];
+
+  try{
+
+    list=
+      JSON.parse(
+        localStorage.getItem(
+          "gg_local_"+id
+        ) || "[]"
+      );
+
+  }catch{
+
+    list=[];
+  }
+
+  if(!list.length){
+
+    $("leaderContent").innerHTML=`
+      <h3>${game[2]} ${game[1]}</h3>
+      <p style="color:#91a6c3">
+        Noch keine Scores.
+      </p>
+    `;
+
+    return;
+  }
+
+  $("leaderContent").innerHTML=`
+    <h3>
+      ${game[2]} ${game[1]} · Gerät
+    </h3>
+
+    <table>
+
+      <tr>
+        <th>#</th>
+        <th>Spieler</th>
+        <th>Score</th>
+      </tr>
+
+      ${list
+        .slice(0,10)
+        .map(
+          (row,index)=>`
+            <tr>
+              <td>${index+1}</td>
+              <td>${escapeHTML(row.player)}</td>
+              <td><b>${row.score}</b></td>
+            </tr>
+          `
+        ).join("")}
+
+    </table>
+  `;
+}
+
+/* =========================================================
+   SUPABASE SESSION
+========================================================= */
+
+if(supabaseClient){
+
+  supabaseClient.auth
+    .getSession()
+    .then(result=>{
+
+      currentUser=
+        result.data?.session?.user || null;
+
+    })
+    .catch(()=>{});
+
+  supabaseClient.auth
+    .onAuthStateChange(
+      (_event,session)=>{
+
+        currentUser=
+          session?.user || null;
+      }
+    );
+}
+
+/* =========================================================
+   START APP
+========================================================= */
+
+createCategories();
+renderGames();
+
+window.addEventListener(
+  "resize",
+  ()=>{
+    if(
+      currentGame &&
+      !$("gameView").classList.contains("hidden")
+    ){
+      canvas.width=
+        Math.min(
+          900,
+          Math.max(
+            320,
+            window.innerWidth-30
+          )
+        );
+    }
+  }
+);
+
+</script>
+
+</body>
+</html>
