@@ -181,7 +181,6 @@ $('communitySend').onclick=async()=>{if(!sb?.auth.currentUser)return toast('Bitt
 async function getMyModeration(){if(!sb?.auth.currentUser)return null;const {data}=await sb.rpc('get_my_moderation');return data?.[0]||null}
 async function checkMuted(){const m=await getMyModeration();return !!(m?.muted_until&&new Date(m.muted_until)>new Date())}
 function subscribeCommunity(){if(!sb||communityChannel)return;communityChannel=sb.channel('gg-community').on('postgres_changes',{event:'*',schema:'public',table:'community_messages'},()=>{if($('communityModal').classList.contains('show'))loadCommunity()}).on('postgres_changes',{event:'*',schema:'public',table:'news'},()=>{if($('communityModal').classList.contains('show'))loadNews()}).subscribe()}
-
 async function openAdmin(){if(!roleCanAdmin())return toast('Nur Admins und Owner.');$('adminModal').classList.add('show');await loadAdminOverview();await loadAdminUsers();await loadAdminNews();await loadAdminGames();await loadAdminChat();subscribeAdmin();}
 $('adminBtn').onclick=openAdmin;
 function switchAdminTab(tab){document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.toggle('active',b.dataset.adminTab===tab));['overview','users','news','games'].forEach(k=>$('admin'+k[0].toUpperCase()+k.slice(1)).style.display=tab===k?'block':'none');$('adminChatTab').style.display=tab==='chat'?'block':'none'}
@@ -202,6 +201,7 @@ function subscribeGameSettings(){if(!sb||settingsChannel)return;settingsChannel=
 async function initAuth(){if(!sb){updateAccount();renderHome();return}const {data}=await sb.auth.getSession();if(data.session){await loadProfile()}updateAccount();await loadGameSettings();subscribeGameSettings();renderHome();subscribeScoreRealtime();sb.auth.onAuthStateChange(async()=>{await loadProfile();updateAccount();renderHome()})}
 window.addEventListener('beforeunload',()=>{try{sb?.removeAllChannels()}catch{}});
 initAuth();
+
 </script>
 </body>
 </html>
