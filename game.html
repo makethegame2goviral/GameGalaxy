@@ -172,36 +172,344 @@ function updateAccount(){const u=sb?.auth.currentUser;if(u){$('accountBtn').text
 function openAuth(){authMode=sb?.auth.currentUser?'login':'login';$('authModal').classList.add('show');syncAuthUI()}
 function syncAuthUI(){const logged=!!sb?.auth.currentUser;$('loginTab').classList.toggle('active',authMode==='login');$('signupTab').classList.toggle('active',authMode==='signup');$('authName').style.display=authMode==='signup'&&!logged?'block':'none';$('authSubmit').style.display=logged?'none':'block';$('logoutBtn').style.display=logged?'block':'none';$('authStatus').textContent=logged?`Angemeldet als ${displayName()} ${badge(profile?.role)}`:''}
 $('accountBtn').onclick=()=>{if(sb?.auth.currentUser){openAuth()}else openAuth()};$('loginTab').onclick=()=>{authMode='login';syncAuthUI()};$('signupTab').onclick=()=>{authMode='signup';syncAuthUI()};$('logoutBtn').onclick=async()=>{await sb.auth.signOut();$('authModal').classList.remove('show');toast('Abgemeldet')};$('authSubmit').onclick=async()=>{const email=$('authEmail').value.trim(),pass=$('authPassword').value,name=$('authName').value.trim();$('authStatus').textContent='Bitte warten …';if(!email||pass.length<6||(authMode==='signup'&&!name))return $('authStatus').textContent='Bitte Daten vollständig ausfüllen.';try{let r;if(authMode==='login')r=await sb.auth.signInWithPassword({email,password:pass});else r=await sb.auth.signUp({email,password:pass,options:{data:{display_name:name}}});if(r.error)throw r.error;$('authStatus').textContent=authMode==='signup'?'Registrierung erfolgreich. Prüfe ggf. deine E-Mail.':'Anmeldung erfolgreich.'}catch(e){$('authStatus').textContent=e.message||'Anmeldung fehlgeschlagen.'}};
+```js
+async function openCommunity(){
+  $('communityModal').classList.add('show');
+  await loadNews();
+  await loadCommunity();
+  subscribeCommunity();
+}
+$('communityBtn').onclick=openCommunity;
+$('heroCommunity').onclick=openCommunity;
 
-async function openCommunity(){ $('communityModal').classList.add('show'); await loadNews(); await loadCommunity(); subscribeCommunity(); }
-$('communityBtn').onclick=openCommunity;$('heroCommunity').onclick=openCommunity;
-async function loadCommunity(){if(!sb){$('communityChat').innerHTML='<div class="empty">Supabase nicht verfügbar.</div>';return}const {data,error}=await sb.from('community_messages').select('id,user_id,message,created_at').order('created_at',{ascending:true}).limit(100);if(error){$('communityChat').innerHTML='<div class="empty">Chat konnte nicht geladen werden.</div>';return}const ids=[...new Set((data||[]).map(x=>x.user_id))];let profs=[];if(ids.length){const r=await sb.from('profiles').select('id,display_name,role').in('id',ids);profs=r.data||[]}const pm=new Map(profs.map(x=>[x.id,x]));$('communityChat').innerHTML=(data||[]).map(x=>{const p=pm.get(x.user_id)||{};const admin=p.role==='admin'||p.role==='owner';return `<div class="chatmsg ${admin?'adminmsg':''}"><div class="chatmeta">${esc(p.display_name||'Spieler')} <span class="badge">${badge(p.role)||''}</span> · ${new Date(x.created_at).toLocaleString('de-DE')}</div><div class="chatbody">${esc(x.message)}</div></div>`}).join('')||'<div class="empty">Noch keine Nachrichten.</div>';$('communityChat').scrollTop=$('communityChat').scrollHeight}
-async function loadNews(){if(!sb)return;const {data}=await sb.from('news').select('id,title,message,created_at').order('created_at',{ascending:false}).limit(6);$('newsList').innerHTML=(data||[]).map(n=>`<div class="news-item"><h4>📰 ${esc(n.title)}</h4><div class="muted" style="font-size:12px">${new Date(n.created_at).toLocaleString('de-DE')}</div><div style="margin-top:5px;white-space:pre-wrap">${esc(n.message)}</div></div>`).join('')||''}
-$('communitySend').onclick=async()=>{if(!sb?.auth.currentUser)return toast('Bitte zuerst anmelden.');const moderation=await getMyModeration();if(moderation?.banned_until&&new Date(moderation.banned_until)>new Date())return toast('Du bist aktuell gesperrt.');if(moderation?.muted_until&&new Date(moderation.muted_until)>new Date())return toast('Du bist aktuell stummgeschaltet.');const msg=$('communityInput').value.trim();if(!msg)return;const {error}=await sb.from('community_messages').insert({user_id:sb.auth.currentUser.id,message:msg});if(error)toast('Nachricht konnte nicht gesendet werden.');else $('communityInput').value=''};
-async function getMyModeration(){if(!sb?.auth.currentUser)return null;const {data}=await sb.rpc('get_my_moderation');return data?.[0]||null}
-async function checkMuted(){const m=await getMyModeration();return !!(m?.muted_until&&new Date(m.muted_until)>new Date())}
-function subscribeCommunity(){if(!sb||communityChannel)return;communityChannel=sb.channel('gg-community').on('postgres_changes',{event:'*',schema:'public',table:'community_messages'},()=>{if($('communityModal').classList.contains('show'))loadCommunity()}).on('postgres_changes',{event:'*',schema:'public',table:'news'},()=>{if($('communityModal').classList.contains('show'))loadNews()}).subscribe()}
-async function openAdmin(){if(!roleCanAdmin())return toast('Nur Admins und Owner.');$('adminModal').classList.add('show');await loadAdminOverview();await loadAdminUsers();await loadAdminNews();await loadAdminGames();await loadAdminChat();subscribeAdmin();}
+async function loadCommunity(){
+  if(!sb){
+    $('communityChat').innerHTML='<div class="empty">Supabase nicht verfügbar.</div>';
+    return;
+  }
+  const {data,error}=await sb.from('community_messages').select('id,user_id,message,created_at').order('created_at',{ascending:true}).limit(100);
+  if(error){
+    $('communityChat').innerHTML='<div class="empty">Chat konnte nicht geladen werden.</div>';
+    return;
+  }
+  const ids=[...new Set((data||[]).map(x=>x.user_id))];
+  let profs=[];
+  if(ids.length){
+    const r=await sb.from('profiles').select('id,display_name,role').in('id',ids);
+    profs=r.data||[];
+  }
+  const pm=new Map(profs.map(x=>[x.id,x]));
+  $('communityChat').innerHTML=(data||[]).map(x=>{
+    const p=pm.get(x.user_id)||{};
+    const admin=p.role==='admin'||p.role==='owner';
+    return `<div class="chatmsg ${admin?'adminmsg':''}"><div class="chatmeta">${esc(p.display_name||'Spieler')} <span class="badge">${badge(p.role)||''}</span> · ${new Date(x.created_at).toLocaleString('de-DE')}</div><div class="chatbody">${esc(x.message)}</div></div>`;
+  }).join('')||'<div class="empty">Noch keine Nachrichten.</div>';
+  $('communityChat').scrollTop=$('communityChat').scrollHeight;
+}
+
+async function loadNews(){
+  if(!sb)return;
+  const {data}=await sb.from('news').select('id,title,message,created_at').order('created_at',{ascending:false}).limit(6);
+  $('newsList').innerHTML=(data||[]).map(n=>`<div class="news-item"><h4>📰 ${esc(n.title)}</h4><div class="muted" style="font-size:12px">${new Date(n.created_at).toLocaleString('de-DE')}</div><div style="margin-top:5px;white-space:pre-wrap">${esc(n.message)}</div></div>`).join('')||'';
+}
+
+$('communitySend').onclick=async()=>{
+  if(!sb?.auth.currentUser)return toast('Bitte zuerst anmelden.');
+  const moderation=await getMyModeration();
+  if(moderation?.banned_until&&new Date(moderation.banned_until)>new Date())return toast('Du bist aktuell gesperrt.');
+  if(moderation?.muted_until&&new Date(moderation.muted_until)>new Date())return toast('Du bist aktuell stummgeschaltet.');
+  const msg=$('communityInput').value.trim();
+  if(!msg)return;
+  const {error}=await sb.from('community_messages').insert({user_id:sb.auth.currentUser.id,message:msg});
+  if(error)toast('Nachricht konnte nicht gesendet werden.');
+  else $('communityInput').value='';
+};
+
+async function getMyModeration(){
+  if(!sb?.auth.currentUser)return null;
+  const {data}=await sb.rpc('get_my_moderation');
+  return data?.[0]||null;
+}
+
+async function checkMuted(){
+  const m=await getMyModeration();
+  return !!(m?.muted_until&&new Date(m.muted_until)>new Date());
+}
+
+function subscribeCommunity(){
+  if(!sb||communityChannel)return;
+  communityChannel=sb.channel('gg-community')
+    .on('postgres_changes',{event:'*',schema:'public',table:'community_messages'},()=>{
+      if($('communityModal').classList.contains('show'))loadCommunity();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'news'},()=>{
+      if($('communityModal').classList.contains('show'))loadNews();
+    })
+    .subscribe();
+}
+
+async function openAdmin(){
+  if(!roleCanAdmin())return toast('Nur Admins und Owner.');
+  $('adminModal').classList.add('show');
+  await loadAdminOverview();
+  await loadAdminUsers();
+  await loadAdminNews();
+  await loadAdminGames();
+  await loadAdminChat();
+  subscribeAdmin();
+}
+
 $('adminBtn').onclick=openAdmin;
-function switchAdminTab(tab){document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.toggle('active',b.dataset.adminTab===tab));['overview','users','news','games'].forEach(k=>$('admin'+k[0].toUpperCase()+k.slice(1)).style.display=tab===k?'block':'none');$('adminChatTab').style.display=tab==='chat'?'block':'none'}
+
+function switchAdminTab(tab){
+  document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.toggle('active',b.dataset.adminTab===tab));
+  ['overview','users','news','games'].forEach(k=>{
+    const el=$('admin'+k[0].toUpperCase()+k.slice(1));
+    if(el)el.style.display=tab===k?'block':'none';
+  });
+  if($('adminChatTab'))$('adminChatTab').style.display=tab==='chat'?'block':'none';
+}
+
 document.querySelectorAll('[data-admin-tab]').forEach(b=>b.onclick=()=>switchAdminTab(b.dataset.adminTab));
-async function loadAdminOverview(){$('adminRoleText').innerHTML=`${badge(profile?.role)||'Spieler'}<br><span class="muted">${esc(displayName())}</span>`;$('adminSystemText').innerHTML=`Online: ${sb?.auth.currentUser?'ja':'nein'}<br>Realtime: aktiviert<br>Spiele: ${G.length}`;$('resetGameSelect').innerHTML=G.map(g=>`<option value="${g.id}">${g.icon} ${esc(g.name)}</option>`).join('');$('resetGameBtn').onclick=async()=>{if(profile?.role!=='owner')return toast('Nur der Owner darf Ranglisten zurücksetzen.');const id=$('resetGameSelect').value;if(!confirm('Diese Rangliste wirklich löschen?'))return;const{error}=await sb.rpc('reset_game_leaderboard',{target_game:id});if(error)toast(error.message);else{toast('Rangliste zurückgesetzt.');loadLeaderboard()}};$('resetAllBtn').onclick=async()=>{if(profile?.role!=='owner')return toast('Nur der Owner darf Ranglisten zurücksetzen.');if(!confirm('ALLE Ranglisten wirklich löschen?'))return;const{error}=await sb.rpc('reset_all_leaderboards');if(error)toast(error.message);else toast('Alle Ranglisten zurückgesetzt.')}}
-async function loadAdminUsers(){if(!sb)return;const {data}=await sb.from('profiles').select('id,display_name,role,created_at').order('created_at',{ascending:false}).limit(100);$('adminUsers').innerHTML=`<div class="admin-card"><h3>👥 Nutzerverwaltung</h3>${(data||[]).map(u=>{const isSelf=u.id===sb.auth.currentUser?.id;return `<div class="userline"><div><b>${esc(u.display_name||'Spieler')}</b> <span class="badge">${badge(u.role)||'Spieler'}</span><div class="muted" style="font-size:11px">${u.id}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${profile?.role==='owner'&&u.role==='player'?`<button class="btn green" data-make-admin="${u.id}">Admin</button>`:''}${profile?.role==='owner'&&u.role==='admin'&&!isSelf?`<button class="btn danger" data-remove-admin="${u.id}">Entfernen</button>`:''}${u.id!==sb.auth.currentUser?.id&&roleCanAdmin()?`<button class="btn" data-mute="${u.id}">Mute</button><button class="btn danger" data-ban="${u.id}">Ban</button>`:''}</div></div>`}).join('')||'<div class="empty">Keine Nutzer.</div>'}</div>`;document.querySelectorAll('[data-make-admin]').forEach(b=>b.onclick=async()=>{const{error}=await sb.rpc('set_admin',{target_user:b.dataset.makeAdmin});if(error)toast(error.message);else{toast('Admin gesetzt.');loadAdminUsers()}});document.querySelectorAll('[data-remove-admin]').forEach(b=>b.onclick=async()=>{const{error}=await sb.rpc('remove_admin',{target_user:b.dataset.removeAdmin});if(error)toast(error.message);else{toast('Admin entfernt.');loadAdminUsers()}});document.querySelectorAll('[data-mute]').forEach(b=>b.onclick=()=>moderatePrompt(b.dataset.mute,'mute'));document.querySelectorAll('[data-ban]').forEach(b=>b.onclick=()=>moderatePrompt(b.dataset.ban,'ban'))}
-async function moderatePrompt(id,action){const mins=Number(prompt(action==='mute'?'Mute-Minuten':'Ban-Minuten','30'));if(!mins||mins<1)return;const until=new Date(Date.now()+mins*60000).toISOString();const reason=prompt('Grund:','Moderation durch GameGalaxy-Admin')||'';const{error}=await sb.rpc('moderate_user',{target_user:id,action,until_time:until,moderation_reason:reason});if(error)toast(error.message);else{toast(action==='mute'?'Nutzer stummgeschaltet.':'Nutzer gesperrt.');loadAdminUsers()}}
-async function loadAdminNews(){const {data}=await sb.from('news').select('id,title,message,created_at').order('created_at',{ascending:false}).limit(30);$('adminNews').innerHTML=`<div class="admin-card"><h3>📰 News veröffentlichen</h3><div class="form"><input id="newsTitle" maxlength="200" placeholder="Titel"><textarea id="newsMessage" maxlength="3000" placeholder="Nachricht"></textarea><div style="display:flex;justify-content:flex-end"><button class="btn primary" id="publishNews">Veröffentlichen</button></div></div><div style="display:grid;gap:8px;margin-top:14px">${(data||[]).map(n=>`<div class="news-item"><div style="display:flex;gap:8px;align-items:start"><div style="flex:1"><h4>${esc(n.title)}</h4><div class="muted" style="font-size:12px">${new Date(n.created_at).toLocaleString('de-DE')}</div><div style="margin-top:5px;white-space:pre-wrap">${esc(n.message)}</div></div>${profile?.role==='owner'?`<button class="btn danger" data-delete-news="${n.id}">Löschen</button>`:''}</div></div>`).join('')}</div></div>`;$('publishNews').onclick=async()=>{const title=$('newsTitle').value.trim(),msg=$('newsMessage').value.trim();if(!title||!msg)return;const{error}=await sb.rpc('create_news',{news_title:title,news_message:msg});if(error)toast(error.message);else{$('newsTitle').value='';$('newsMessage').value='';toast('News veröffentlicht.');loadAdminNews()}};document.querySelectorAll('[data-delete-news]').forEach(b=>b.onclick=async()=>{if(profile?.role!=='owner')return;const{error}=await sb.from('news').delete().eq('id',b.dataset.deleteNews);if(error)toast(error.message);else{toast('News gelöscht.');loadAdminNews()}})}
-async function loadAdminGames(){const{data}=await sb.from('game_settings').select('game_id,enabled,maintenance,event_active,event_name').order('game_id');const map=new Map((data||[]).map(x=>[x.game_id,x]));$('adminGames').innerHTML=`<div class="admin-card"><h3>🎮 Spiele & Events</h3>${G.map(g=>{const x=map.get(g.id)||{enabled:true,maintenance:false,event_active:false,event_name:''};return `<div class="userline"><div><b>${g.icon} ${esc(g.name)}</b><div class="muted">${x.maintenance?'Wartung':x.event_active?('Event: '+esc(x.event_name||'')):(x.enabled?'Aktiv':'Deaktiviert')}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-toggle-game="${g.id}" data-enabled="${x.enabled}">${x.enabled?'Deaktivieren':'Aktivieren'}</button><button class="btn" data-maint-game="${g.id}" data-enabled="${x.maintenance}">${x.maintenance?'Wartung aus':'Wartung'}</button><button class="btn" data-event-game="${g.id}">Event</button></div></div>`}).join('')}</div>`;document.querySelectorAll('[data-toggle-game]').forEach(b=>b.onclick=()=>setGameStatus(b.dataset.toggleGame,b.dataset.enabled!=='true',null));document.querySelectorAll('[data-maint-game]').forEach(b=>b.onclick=()=>setGameStatus(b.dataset.maintGame,null,b.dataset.enabled!=='true'));document.querySelectorAll('[data-event-game]').forEach(b=>b.onclick=async()=>{const name=prompt('Eventname:','Weekend Event');if(!name)return;const{error}=await sb.rpc('set_game_status',{target_game:b.dataset.eventGame,game_enabled:true,game_maintenance:false,event_enabled:true,event_title:name});if(error)toast(error.message);else loadAdminGames()})}
-async function setGameStatus(id,enabled,maintenance){const r={target_game:id,game_enabled:enabled===null?true:enabled,game_maintenance:maintenance===null?false:maintenance,event_enabled:false,event_title:null};const{error}=await sb.rpc('set_game_status',r);if(error)toast(error.message);else loadAdminGames()}
-async function loadAdminChat(){if(!sb)return;const{data}=await sb.from('admin_messages').select('id,user_id,message,created_at').order('created_at',{ascending:true}).limit(100);$('adminChat').innerHTML=(data||[]).map(x=>`<div class="chatmsg adminmsg"><div class="chatmeta">${new Date(x.created_at).toLocaleString('de-DE')}</div><div class="chatbody">${esc(x.message)}</div></div>`).join('')||'<div class="empty">Noch keine Admin-Nachrichten.</div>';$('adminChat').scrollTop=$('adminChat').scrollHeight}
-$('adminSend').onclick=async()=>{if(!sb?.auth.currentUser||!roleCanAdmin())return;const msg=$('adminInput').value.trim();if(!msg)return;const{error}=await sb.from('admin_messages').insert({user_id:sb.auth.currentUser.id,message:msg});if(error)toast(error.message);else $('adminInput').value=''};
-function subscribeAdmin(){if(!sb||adminChannel)return;adminChannel=sb.channel('gg-admin-chat').on('postgres_changes',{event:'*',schema:'public',table:'admin_messages'},()=>{$('adminModal').classList.contains('show')&&loadAdminChat()}).on('postgres_changes',{event:'*',schema:'public',table:'profiles'},()=>{if(roleCanAdmin())loadAdminUsers()}).on('postgres_changes',{event:'*',schema:'public',table:'game_settings'},()=>{if(roleCanAdmin())loadAdminGames()}).subscribe()}
 
-document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('show'));[...document.querySelectorAll('.modal')].forEach(m=>m.addEventListener('pointerdown',e=>{if(e.target===m)m.classList.remove('show')}));
-async function loadGameSettings(){if(!sb)return;const {data}=await sb.from('game_settings').select('game_id,enabled,maintenance,event_active,event_name');if(data)gameSettings=new Map(data.map(x=>[x.game_id,x]));renderHome()}
-function subscribeGameSettings(){if(!sb||settingsChannel)return;settingsChannel=sb.channel('gg-game-settings').on('postgres_changes',{event:'*',schema:'public',table:'game_settings'},()=>loadGameSettings()).subscribe()}
-async function initAuth(){if(!sb){updateAccount();renderHome();return}const {data}=await sb.auth.getSession();if(data.session){await loadProfile()}updateAccount();await loadGameSettings();subscribeGameSettings();renderHome();subscribeScoreRealtime();sb.auth.onAuthStateChange(async()=>{await loadProfile();updateAccount();renderHome()})}
-window.addEventListener('beforeunload',()=>{try{sb?.removeAllChannels()}catch{}});
+async function loadAdminOverview(){
+  $('adminRoleText').innerHTML=`${badge(profile?.role)||'Spieler'}<br><span class="muted">${esc(displayName())}</span>`;
+  $('adminSystemText').innerHTML=`Online: ${sb?.auth.currentUser?'ja':'nein'}<br>Realtime: aktiviert<br>Spiele: ${G.length}`;
+  $('resetGameSelect').innerHTML=G.map(g=>`<option value="${g.id}">${g.icon} ${esc(g.name)}</option>`).join('');
+
+  $('resetGameBtn').onclick=async()=>{
+    if(profile?.role!=='owner')return toast('Nur der Owner darf Ranglisten zurücksetzen.');
+    const id=$('resetGameSelect').value;
+    if(!confirm('Diese Rangliste wirklich löschen?'))return;
+    const{error}=await sb.rpc('reset_game_leaderboard',{target_game:id});
+    if(error)toast(error.message);
+    else{
+      toast('Rangliste zurückgesetzt.');
+      loadLeaderboard();
+    }
+  };
+
+  $('resetAllBtn').onclick=async()=>{
+    if(profile?.role!=='owner')return toast('Nur der Owner darf Ranglisten zurücksetzen.');
+    if(!confirm('ALLE Ranglisten wirklich löschen?'))return;
+    const{error}=await sb.rpc('reset_all_leaderboards');
+    if(error)toast(error.message);
+    else toast('Alle Ranglisten zurückgesetzt.');
+  };
+}
+
+async function loadAdminUsers(){
+  if(!sb)return;
+  const {data}=await sb.from('profiles').select('id,display_name,role,created_at').order('created_at',{ascending:false}).limit(100);
+
+  $('adminUsers').innerHTML=`<div class="admin-card"><h3>👥 Nutzerverwaltung</h3>${(data||[]).map(u=>{
+    const isSelf=u.id===sb.auth.currentUser?.id;
+    return `<div class="userline"><div><b>${esc(u.display_name||'Spieler')}</b> <span class="badge">${badge(u.role)||'Spieler'}</span><div class="muted" style="font-size:11px">${u.id}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${profile?.role==='owner'&&u.role==='player'?`<button class="btn green" data-make-admin="${u.id}">Admin</button>`:''}${profile?.role==='owner'&&u.role==='admin'&&!isSelf?`<button class="btn danger" data-remove-admin="${u.id}">Entfernen</button>`:''}${u.id!==sb.auth.currentUser?.id&&roleCanAdmin()?`<button class="btn" data-mute="${u.id}">Mute</button><button class="btn danger" data-ban="${u.id}">Ban</button>`:''}</div></div>`;
+  }).join('')||'<div class="empty">Keine Nutzer.</div>'}</div>`;
+
+  document.querySelectorAll('[data-make-admin]').forEach(b=>b.onclick=async()=>{
+    const{error}=await sb.rpc('set_admin',{target_user:b.dataset.makeAdmin});
+    if(error)toast(error.message);
+    else{
+      toast('Admin gesetzt.');
+      await loadAdminUsers();
+    }
+  });
+
+  document.querySelectorAll('[data-remove-admin]').forEach(b=>b.onclick=async()=>{
+    const{error}=await sb.rpc('remove_admin',{target_user:b.dataset.removeAdmin});
+    if(error)toast(error.message);
+    else{
+      toast('Admin entfernt.');
+      await loadAdminUsers();
+    }
+  });
+
+  document.querySelectorAll('[data-mute]').forEach(b=>b.onclick=()=>moderatePrompt(b.dataset.mute,'mute'));
+  document.querySelectorAll('[data-ban]').forEach(b=>b.onclick=()=>moderatePrompt(b.dataset.ban,'ban'));
+}
+
+async function moderatePrompt(id,action){
+  const mins=Number(prompt(action==='mute'?'Mute-Minuten':'Ban-Minuten','30'));
+  if(!mins||mins<1)return;
+  const until=new Date(Date.now()+mins*60000).toISOString();
+  const reason=prompt('Grund:','Moderation durch GameGalaxy-Admin')||'';
+  const{error}=await sb.rpc('moderate_user',{target_user:id,action,until_time:until,moderation_reason:reason});
+  if(error)toast(error.message);
+  else{
+    toast(action==='mute'?'Nutzer stummgeschaltet.':'Nutzer gesperrt.');
+    await loadAdminUsers();
+  }
+}
+
+async function loadAdminNews(){
+  const {data}=await sb.from('news').select('id,title,message,created_at').order('created_at',{ascending:false}).limit(30);
+
+  $('adminNews').innerHTML=`<div class="admin-card"><h3>📰 News veröffentlichen</h3><div class="form"><input id="newsTitle" maxlength="200" placeholder="Titel"><textarea id="newsMessage" maxlength="3000" placeholder="Nachricht"></textarea><div style="display:flex;justify-content:flex-end"><button class="btn primary" id="publishNews">Veröffentlichen</button></div></div><div style="display:grid;gap:8px;margin-top:14px">${(data||[]).map(n=>`<div class="news-item"><div style="display:flex;gap:8px;align-items:start"><div style="flex:1"><h4>${esc(n.title)}</h4><div class="muted" style="font-size:12px">${new Date(n.created_at).toLocaleString('de-DE')}</div><div style="margin-top:5px;white-space:pre-wrap">${esc(n.message)}</div></div>${profile?.role==='owner'?`<button class="btn danger" data-delete-news="${n.id}">Löschen</button>`:''}</div></div>`).join('')}</div></div>`;
+
+  $('publishNews').onclick=async()=>{
+    const title=$('newsTitle').value.trim();
+    const msg=$('newsMessage').value.trim();
+    if(!title||!msg)return;
+    const{error}=await sb.rpc('create_news',{news_title:title,news_message:msg});
+    if(error)toast(error.message);
+    else{
+      $('newsTitle').value='';
+      $('newsMessage').value='';
+      toast('News veröffentlicht.');
+      await loadAdminNews();
+    }
+  };
+
+  document.querySelectorAll('[data-delete-news]').forEach(b=>b.onclick=async()=>{
+    if(profile?.role!=='owner')return;
+    const{error}=await sb.from('news').delete().eq('id',b.dataset.deleteNews);
+    if(error)toast(error.message);
+    else{
+      toast('News gelöscht.');
+      await loadAdminNews();
+    }
+  });
+}
+
+async function loadAdminGames(){
+  const{data}=await sb.from('game_settings').select('game_id,enabled,maintenance,event_active,event_name').order('game_id');
+  const map=new Map((data||[]).map(x=>[x.game_id,x]));
+
+  $('adminGames').innerHTML=`<div class="admin-card"><h3>🎮 Spiele & Events</h3>${G.map(g=>{
+    const x=map.get(g.id)||{enabled:true,maintenance:false,event_active:false,event_name:''};
+    return `<div class="userline"><div><b>${g.icon} ${esc(g.name)}</b><div class="muted">${x.maintenance?'Wartung':x.event_active?('Event: '+esc(x.event_name||'')):(x.enabled?'Aktiv':'Deaktiviert')}</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-toggle-game="${g.id}" data-enabled="${x.enabled}">${x.enabled?'Deaktivieren':'Aktivieren'}</button><button class="btn" data-maint-game="${g.id}" data-enabled="${x.maintenance}">${x.maintenance?'Wartung aus':'Wartung'}</button><button class="btn" data-event-game="${g.id}">Event</button></div></div>`;
+  }).join('')}</div>`;
+
+  document.querySelectorAll('[data-toggle-game]').forEach(b=>b.onclick=()=>setGameStatus(b.dataset.toggleGame,b.dataset.enabled!=='true',null));
+  document.querySelectorAll('[data-maint-game]').forEach(b=>b.onclick=()=>setGameStatus(b.dataset.maintGame,null,b.dataset.enabled!=='true'));
+
+  document.querySelectorAll('[data-event-game]').forEach(b=>b.onclick=async()=>{
+    const name=prompt('Eventname:','Weekend Event');
+    if(!name)return;
+    const{error}=await sb.rpc('set_game_status',{
+      target_game:b.dataset.eventGame,
+      game_enabled:true,
+      game_maintenance:false,
+      event_enabled:true,
+      event_title:name
+    });
+    if(error)toast(error.message);
+    else{
+      toast('Event aktiviert.');
+      await loadAdminGames();
+    }
+  });
+}
+
+async function setGameStatus(id,enabled,maintenance){
+  const r={
+    target_game:id,
+    game_enabled:enabled===null?true:enabled,
+    game_maintenance:maintenance===null?false:maintenance,
+    event_enabled:false,
+    event_title:null
+  };
+  const{error}=await sb.rpc('set_game_status',r);
+  if(error)toast(error.message);
+  else await loadAdminGames();
+}
+
+async function loadAdminChat(){
+  if(!sb)return;
+  const{data}=await sb.from('admin_messages').select('id,user_id,message,created_at').order('created_at',{ascending:true}).limit(100);
+  $('adminChat').innerHTML=(data||[]).map(x=>`<div class="chatmsg adminmsg"><div class="chatmeta">${new Date(x.created_at).toLocaleString('de-DE')}</div><div class="chatbody">${esc(x.message)}</div></div>`).join('')||'<div class="empty">Noch keine Admin-Nachrichten.</div>';
+  $('adminChat').scrollTop=$('adminChat').scrollHeight;
+}
+
+$('adminSend').onclick=async()=>{
+  if(!sb?.auth.currentUser||!roleCanAdmin())return;
+  const msg=$('adminInput').value.trim();
+  if(!msg)return;
+  const{error}=await sb.from('admin_messages').insert({user_id:sb.auth.currentUser.id,message:msg});
+  if(error)toast(error.message);
+  else $('adminInput').value='';
+};
+
+function subscribeAdmin(){
+  if(!sb||adminChannel)return;
+  adminChannel=sb.channel('gg-admin-chat')
+    .on('postgres_changes',{event:'*',schema:'public',table:'admin_messages'},()=>{
+      if($('adminModal').classList.contains('show'))loadAdminChat();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},()=>{
+      if(roleCanAdmin())loadAdminUsers();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'game_settings'},()=>{
+      if(roleCanAdmin())loadAdminGames();
+    })
+    .subscribe();
+}
+
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('show'));
+[...document.querySelectorAll('.modal')].forEach(m=>m.addEventListener('pointerdown',e=>{
+  if(e.target===m)m.classList.remove('show');
+}));
+
+async function loadGameSettings(){
+  if(!sb)return;
+  const {data}=await sb.from('game_settings').select('game_id,enabled,maintenance,event_active,event_name');
+  if(data)gameSettings=new Map(data.map(x=>[x.game_id,x]));
+  renderHome();
+}
+
+function subscribeGameSettings(){
+  if(!sb||settingsChannel)return;
+  settingsChannel=sb.channel('gg-game-settings')
+    .on('postgres_changes',{event:'*',schema:'public',table:'game_settings'},()=>loadGameSettings())
+    .subscribe();
+}
+
+async function initAuth(){
+  if(!sb){
+    updateAccount();
+    renderHome();
+    return;
+  }
+
+  const {data,error}=await sb.auth.getSession();
+
+  if(error){
+    console.error('Auth Session Fehler:',error);
+  }
+
+  if(data?.session){
+    await loadProfile();
+  }else{
+    profile=null;
+  }
+
+  updateAccount();
+  syncAuthUI();
+  await loadGameSettings();
+  subscribeGameSettings();
+  renderHome();
+  subscribeScoreRealtime();
+
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(session){
+      await loadProfile();
+    }else{
+      profile=null;
+    }
+
+    updateAccount();
+    syncAuthUI();
+    renderHome();
+  });
+}
+
+window.addEventListener('beforeunload',()=>{
+  try{sb?.removeAllChannels()}catch{}
+});
+
 initAuth();
-
+```
 </script>
 </body>
 </html>
